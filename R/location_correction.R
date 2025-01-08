@@ -24,7 +24,7 @@ location_correction <- function(gedi_l2a, add_x, add_y, buf, crs_code){
     gedi_l2a$coords_x <- coords_x
     gedi_l2a$coords_y <- coords_y
 
-    sf_newdata <- st_as_sf(gedi_l2a |> st_drop_geometry(), coords = c("coords_x", "coords_y"), crs = crs_code)
+    sf_newdata <- st_as_sf(st_drop_geometry(gedi_l2a), coords = c("coords_x", "coords_y"), crs = crs_code)
     sf_newdata <- st_buffer(sf_newdata, buf)
     return(sf_newdata)
 }
