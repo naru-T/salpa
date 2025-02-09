@@ -11,6 +11,7 @@
 #'
 #' @importFrom sf st_transform st_coordinates st_as_sf st_crs
 #' @importFrom GA ga
+#' @importFrom dplyr bind_rows
 #'
 #' @examples
 #' \dontrun{
@@ -26,6 +27,9 @@
 #' @export
 linear_adjust <- function(sf_object, crs_code) {
     sf_object <- st_transform(sf_object, crs_code)
+    if (!"shot_number" %in% colnames(sf_object)) {
+        stop("The sf_object does not contain a 'shot_number' column, which is required for the function to work correctly.")
+    }
     shot_number <- as.character(sf_object$shot_number)
     shot_number <- substr(shot_number, 1, 12)
     # remove duplicated shot number
@@ -37,11 +41,9 @@ linear_adjust <- function(sf_object, crs_code) {
         slope <- params[1]
         offset <- params[2]
 
-        # Calculate predicted y values using y = mx + b
-        #y_pred <- slope * x_points + offset
-
         # Calculate perpendicular distances (total error)
-        distances <- abs(-slope * x_points + y_points - offset) / sqrt(slope^2 + 1)
+        distances <- abs(-slope * x_points + y_points - offset) /
+                     sqrt(slope^2 + 1)
 
         # Return sum of squared distances
         return(sum(distances^2))
@@ -82,10 +84,11 @@ linear_adjust <- function(sf_object, crs_code) {
         return(ga_result@solution)
     }
 
-
     # Loop through each unique shot number
     for (shot in shot_number) {
-        # Extract coordinates from sf object
+        # Subset the sf object for the current shot number
+        sf_object_subset <- sf_object[substr(sf_object$shot_number, 1, 12) == shot, ]
+        # Extract coordinates from the subset sf object
         coords <- st_coordinates(sf_object_subset)
         coords_x <- coords[, 1]
         coords_y <- coords[, 2]
@@ -95,12 +98,8 @@ linear_adjust <- function(sf_object, crs_code) {
         slope_0 <- initial_params[1]
         offset_0 <- initial_params[2]
 
-        # Calculate initial error
-        #initial_error <- calculate_error(initial_params, coords_x, coords_y)
-
         # Optimize parameters
         optimized_params <- optimize_line(coords_x, coords_y, slope_0, offset_0)
-        #final_error <- calculate_error(optimized_params, coords_x, coords_y)
 
         slope <- optimized_params[1]
         intercept <- optimized_params[2]
@@ -114,14 +113,14 @@ linear_adjust <- function(sf_object, crs_code) {
         sf_object_subset$orig_y <- coords[,2]
         sf_object_subset$coords_x <- x_proj
         sf_object_subset$coords_y <- y_proj
-        adjusted_sf <- st_as_sf(sf_object_subset |> st_drop_geometry(), coords = c("coords_x", "coords_y"), crs = crs_code)
+        adjusted_sf <- st_as_sf(st_drop_geometry(sf_object_subset), coords = c("coords_x", "coords_y"), crs = crs_code)
 
         # Append to the list
         adjusted_sf_list[[length(adjusted_sf_list) + 1]] <- adjusted_sf
     }
 
     # Merge all adjusted sf objects into one
-    final_adjusted_sf <- do.call(rbind, adjusted_sf_list)
+    final_adjusted_sf <- dplyr::bind_rows(adjusted_sf_list)
 
     return(final_adjusted_sf)
 }

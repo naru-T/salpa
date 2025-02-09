@@ -1,0 +1,43 @@
+---
+title: "Satellite LiDAR Point Adjustment (slpa)"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Satellite LiDAR Point Adjustment (slpa)}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Overview
+
+The `slpa` package provides tools for optimizing and adjusting satellite LiDAR point positions using genetic algorithms. It focuses on linear adjustment and location correction of spatial point data, particularly for satellite-based LiDAR observations.
+
+## Installation
+
+You can install the development version of slpa from GitHub with:
+
+```r
+# install.packages("devtools")
+devtools::install_github("yourusername/slpa")
+```
+
+## Basic Usage
+
+First, load the package:
+
+```{r setup}
+library(slpa)
+```
+
+The package provides several key functions for point adjustment:
+
+1. `linear_adjust()`: Aligns points to a best fit line using genetic algorithm optimization
+2. `location_correction()`: Corrects point locations with specified offsets
+
+For detailed examples and usage, please refer to the function documentation.

@@ -1,15 +1,17 @@
-Package: gediLocationEdit
-Title: Find the optimal location of gedi footprints adjusted by GA algorithm
+Package: slpa
+Title: Satellite LiDAR Point Adjustment
 Version: 0.0.0.9002
-Authors@R: 
+Authors@R:
     person("Narumasa", "Tsutsumida", , "rsnaru.jp@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
+Description: A package for optimizing and adjusting satellite LiDAR point positions using genetic algorithms.
+    The package provides tools for linear adjustment and location correction of spatial point data,
+    particularly focused on satellite-based LiDAR observations.
 License: GPL (>= 3)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
-Suggests: 
+Suggests:
     knitr,
     rmarkdown
 VignetteBuilder: knitr
