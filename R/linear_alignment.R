@@ -1,6 +1,6 @@
-#' Adjust GEDI points to Best Fit Line
+#' Linear Alignment of Points
 #'
-#' This function allows to align GEDI points to the best fit linear line.
+#' This function aligns satellite LiDAR footprints to a best fit line using genetic algorithm optimization.
 #' The sf object should be transformed to the specified (projected) CRS before using this function.
 #' The fitting is done by minimizing the perpendicular distances between the points and the line using a genetic algorithm (GA) optimization.
 #'
@@ -21,11 +21,11 @@
 #' # Example usage
 #' sf_object <- st_read("path_to_your_shapefile.shp")
 #' crs_code <- 3857
-#' adjusted_sf <- linear_adjust(sf_object, crs_code)
+#' adjusted_sf <- linear_alignment(sf_object, crs_code)
 #' }
 #'
 #' @export
-linear_adjust <- function(sf_object, crs_code) {
+linear_alignment <- function(sf_object, crs_code) {
     sf_object <- st_transform(sf_object, crs_code)
     if (!"shot_number" %in% colnames(sf_object)) {
         stop("The sf_object does not contain a 'shot_number' column, which is required for the function to work correctly.")

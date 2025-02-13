@@ -5,7 +5,7 @@
 \title{Get loss value to be minimized}
 \usage{
 get_loss(
-  gedi_l2a,
+  lidar_footprints,
   add_x,
   add_y,
   buf,
@@ -13,11 +13,11 @@ get_loss(
   minimizing_method,
   target_variable,
   crs_code,
-  gedi_value
+  lidar_value
 )
 }
 \arguments{
-\item{gedi_l2a}{sf object with GEDI L2A data}
+\item{lidar_footprints}{sf object with satellite LiDAR footprints}
 
 \item{add_x}{numeric value to add to x coordinates}
 
@@ -33,7 +33,7 @@ get_loss(
 
 \item{crs_code}{numeric value for CRS code}
 
-\item{gedi_value}{numeric value for GEDI data}
+\item{lidar_value}{name of the column containing LiDAR measurement values}
 }
 \value{
 data frame with summary statistics

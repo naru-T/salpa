@@ -1,6 +1,6 @@
-Package: slpa
+Package: salpa
 Title: Satellite LiDAR Point Adjustment
-Version: 0.0.0.9002
+Version: 0.0.0.9100
 Authors@R:
     person("Narumasa", "Tsutsumida", , "rsnaru.jp@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "YOUR-ORCID-ID"))

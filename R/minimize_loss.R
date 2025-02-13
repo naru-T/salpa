@@ -32,8 +32,21 @@ minimize_loss <- function(gedi_l2a, input_raster, minimizing_method, target_vari
         return(out)
     }
 
+
+        fitness <- function(x) {
+            # Calculate the fitness value with error handling
+            tryCatch({
+                fitness_value <- -objective_function(x[1], x[2])
+                if(is.na(fitness_value) || !is.numeric(fitness_value)) {
+                return(-Inf)  # Return -Inf for invalid solutions
+                }
+                return(fitness_value)
+            }, error = function(e) {
+                return(-Inf)  # Return -Inf for errors
+            })
+            }
         out <- ga(type = "real-valued",
-                  fitness = function(x) -objective_function(x[1], x[2]),
+                  fitness = fitness,
                   lower = lower_bounds,
                   upper = upper_bounds,
                   popSize = pop_size,

@@ -2,10 +2,10 @@
 
 export(extract_values)
 export(get_loss)
-export(linear_adjust)
-export(location_correction)
+export(linear_alignment)
 export(minimize_loss)
 export(perform_dtw)
+export(positional_correction)
 export(run_analysis)
 importFrom(GA,ga)
 importFrom(dplyr,bind_rows)
