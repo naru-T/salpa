@@ -5,13 +5,13 @@
 \title{Run the analysis for all orbits}
 \usage{
 run_analysis(
-  gedi_l2a,
+  lidar_footprints,
   input_raster,
   minimizing_method = "dtw",
   target_variable,
   buf = 12.5,
   crs_code,
-  gedi_value,
+  lidar_value,
   lower_bounds = c(-30, -30),
   upper_bounds = c(30, 30),
   pop_size = 50,
@@ -20,7 +20,7 @@ run_analysis(
 )
 }
 \arguments{
-\item{gedi_l2a}{sf object of gedi l2a}
+\item{lidar_footprints}{sf object containing satellite LiDAR footprints}
 
 \item{input_raster}{raster object for extraction}
 
@@ -32,7 +32,7 @@ run_analysis(
 
 \item{crs_code}{numeric value for CRS code}
 
-\item{gedi_value}{numeric value for GEDI data}
+\item{lidar_value}{name of the column containing LiDAR measurement values}
 
 \item{lower_bounds}{numeric vector for lower bounds in GA}
 

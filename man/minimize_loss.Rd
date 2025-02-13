@@ -5,13 +5,13 @@
 \title{Minimize loss}
 \usage{
 minimize_loss(
-  gedi_l2a,
+  lidar_footprints,
   input_raster,
   minimizing_method,
   target_variable,
   buf,
   crs_code,
-  gedi_value,
+  lidar_value,
   lower_bounds,
   upper_bounds,
   pop_size,
@@ -20,7 +20,7 @@ minimize_loss(
 )
 }
 \arguments{
-\item{gedi_l2a}{sf object of gedi_l2a}
+\item{lidar_footprints}{sf object containing satellite LiDAR footprints}
 
 \item{input_raster}{referenced raster object for extraction}
 
@@ -32,7 +32,7 @@ minimize_loss(
 
 \item{crs_code}{numeric value for CRS code}
 
-\item{gedi_value}{character string for the GEDI value}
+\item{lidar_value}{name of the column containing LiDAR measurement values}
 
 \item{lower_bounds}{numeric vector for lower bounds in GA. Default is c(-30, -30)}
 
