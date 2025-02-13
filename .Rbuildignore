@@ -1,0 +1,13 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^README\.md$
+^LICENSE\.md$
+^\.github$
+^data-raw$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
+^\.git$
+^\.gitignore$
+^\.codegpt$
+^test\.R$

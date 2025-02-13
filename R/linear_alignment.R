@@ -26,10 +26,29 @@
 #'
 #' @export
 linear_alignment <- function(sf_object, crs_code) {
-    sf_object <- st_transform(sf_object, crs_code)
+    # Validate CRS code
+    if (!is.numeric(crs_code)) {
+        stop("crs_code must be a numeric EPSG code")
+    }
+    
+    # Check if the CRS exists
+    tryCatch({
+        crs <- sf::st_crs(crs_code)
+        if (is.na(crs)) {
+            stop("Invalid crs_code: ", crs_code, ". Please provide a valid EPSG code.")
+        }
+    }, error = function(e) {
+        stop("Invalid crs_code: ", crs_code, ". Please provide a valid EPSG code.")
+    })
+    
+    # Check for shot_number column
     if (!"shot_number" %in% colnames(sf_object)) {
         stop("The sf_object does not contain a 'shot_number' column, which is required for the function to work correctly.")
     }
+    
+    # Transform to specified CRS
+    sf_object <- st_transform(sf_object, crs_code)
+    
     shot_number <- as.character(sf_object$shot_number)
     shot_number <- substr(shot_number, 1, 12)
     # remove duplicated shot number

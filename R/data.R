@@ -1,0 +1,29 @@
+#' Sample Satellite LiDAR Footprints Dataset
+#'
+#' A sample dataset containing satellite LiDAR footprints for demonstrating the functionality
+#' of the salpa package. This dataset is a sample of GEDI L2A shot (a series of footprints) in Nikko, Japan. 
+#' The preprocessing was implemented by using degrade_flag and quality_flag etc.
+#' `gedi_dem` has been calibrated with geoid from elev_lowestmode of the GEDI L2A data product.
+#' The dataset is stored as a GeoPackage file in the package's
+#' inst/extdata directory and contains LiDAR footprints with elevation measurements.
+#'
+#' The dataset can be accessed using \code{system.file("extdata", "gedi_l2a_shot_sample.gpkg", package = "salpa")}
+#'
+#' @format A GeoPackage file containing a simple feature collection with the following attributes:
+#' \describe{
+#'   \item{shot_number}{Unique identifier for each LiDAR shot}
+#'   \item{gedi_dem}{Elevation measurement from the LiDAR sensor}
+#'   \item{geometry}{Point geometry in WGS84 (EPSG:4326) coordinate system}
+#' }
+#' @source Sample data extracted from GEDI L2A data product
+#' @examples
+#' # Get the path to the sample data
+#' gpkg_path <- system.file("extdata", "gedi_l2a_shot_sample.gpkg", package = "salpa")
+#'
+#' # Read the data
+#' if (file.exists(gpkg_path)) {
+#'   lidar_footprints <- sf::st_read(gpkg_path)
+#' }
+#' @name gedi_l2a_shot_sample
+#' @docType data
+NULL 

@@ -5,7 +5,7 @@
 #' @param lidar_footprints Input satellite LiDAR footprints as an sf object
 #' @param add_x X-axis offset
 #' @param add_y Y-axis offset
-#' @param buf Buffer size
+#' @param buf Buffer size (must be positive)
 #' @param crs_code Coordinate reference system code
 #' @importFrom sf  st_transform
 #' @importFrom sf  st_coordinates
@@ -15,6 +15,27 @@
 #' @return Adjusted satellite LiDAR footprints
 #' @export
 positional_correction <- function(lidar_footprints, add_x, add_y, buf, crs_code){
+    # Validate buffer size
+    if (!is.numeric(buf) || buf <= 0) {
+        stop("Buffer size must be a positive number")
+    }
+    
+    # Validate CRS code
+    if (!is.numeric(crs_code)) {
+        stop("crs_code must be a numeric EPSG code")
+    }
+    
+    # Check if the CRS exists
+    tryCatch({
+        crs <- sf::st_crs(crs_code)
+        if (is.na(crs)) {
+            stop("Invalid crs_code: ", crs_code, ". Please provide a valid EPSG code.")
+        }
+    }, error = function(e) {
+        stop("Invalid crs_code: ", crs_code, ". Please provide a valid EPSG code.")
+    })
+    
+    # Transform to specified CRS
     lidar_footprints <- st_transform(lidar_footprints, crs_code)
     coords <- st_coordinates(st_centroid(lidar_footprints))
 
