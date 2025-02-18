@@ -2,7 +2,8 @@
 #'
 #' @param lidar_footprints sf object containing satellite LiDAR footprints
 #' @param input_rast referenced raster object for extraction
-#' @param minimizing_method character string for the minimizing method ("dtw" is only supported)
+#' @param minimizing_method character string for the minimizing method. Default is "euclidean".
+#'        Options are "dtw", "euclidean", "manhattan", "correlation", "area", "hausdorff".
 #' @param target_variable character string for the target variable (min, max, mean, median, etc.). See exact_extract
 #' @param buf numeric value for buf size. Default is 12.5
 #' @param crs_code numeric value for CRS code

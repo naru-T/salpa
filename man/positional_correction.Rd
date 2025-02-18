@@ -24,7 +24,8 @@ positional_correction(
 
 \item{input_rast}{raster object for reference data}
 
-\item{minimizing_method}{character string for the minimizing method (default: "dtw")}
+\item{minimizing_method}{character string for the minimizing method. Default is "euclidean".
+Options are "dtw", "euclidean", "manhattan", "correlation", "area", "hausdorff".}
 
 \item{target_variable}{character string for the target variable}
 

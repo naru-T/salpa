@@ -4,7 +4,8 @@
 #'
 #' @param lidar_footprints sf object containing satellite LiDAR footprints
 #' @param input_rast raster object for reference data
-#' @param minimizing_method character string for the minimizing method (default: "dtw")
+#' @param minimizing_method character string for the minimizing method. Default is "euclidean".
+#'        Options are "dtw", "euclidean", "manhattan", "correlation", "area", "hausdorff".
 #' @param target_variable character string for the target variable
 #' @param buf numeric value for buffer size (default: 12.5)
 #' @param crs_code numeric value for CRS code

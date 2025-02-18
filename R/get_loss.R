@@ -5,7 +5,8 @@
 #' @param add_y numeric value to add to y coordinates
 #' @param buf numeric value for buffer size
 #' @param input_rast raster object for reference data
-#' @param minimizing_method character string for the minimizing method
+#' @param minimizing_method character string for the minimizing method. Default is "euclidean".
+#'        Options are "dtw", "euclidean", "manhattan", "correlation", "area", "hausdorff".
 #' @param target_variable character string for the target variable
 #' @param crs_code numeric value for CRS code
 #' @param lidar_value name of the column containing LiDAR measurement values
@@ -14,7 +15,9 @@
 #' @importFrom dplyr summarise
 #' @return data frame with summary statistics
 #' @export
-get_loss <- function(lidar_footprints, add_x, add_y, buf, input_rast, minimizing_method, target_variable, crs_code, lidar_value){
+get_loss <- function(lidar_footprints, add_x, add_y, buf, input_rast, 
+                    minimizing_method = "euclidean", target_variable, 
+                    crs_code, lidar_value) {
     posit_corrected_data <- position_adjustment(lidar_footprints, add_x, add_y, crs_code)
     buffered_data <- st_buffer(posit_corrected_data, buf)
     out <- extract_values(buffered_data, input_rast, target_variable)

@@ -23,7 +23,7 @@ The `salpa` package provides tools for optimizing and adjusting satellite LiDAR 
 1. Linear Alignment: Aligns points to their best-fit line using genetic algorithm optimization
 2. Positional Correction: Fine-tunes point locations with specified offsets to minimize elevation differences
 
-This vignette demonstrates the complete workflow for adjusting satellite LiDAR footprints using both methods.
+The package offers multiple distance metrics for comparing sequences, making it flexible for different types of analyses.
 
 ## Installation
 
@@ -120,21 +120,23 @@ names(linearly_adjusted_dem) <- c("ID", "dem")
 
 ## Step 3: Positional Adjustment
 
-After linear alignment, we can further refine the point positions using genetic algorithm optimization:
+After linear alignment, we can further refine the point positions using genetic algorithm optimization. By default, the Euclidean distance metric is used, but you can specify other metrics based on your needs:
 
 ```{r positional_adjustment, eval=FALSE}
-# Prepare data for positional adjustment
-lidar_footprints$linearly_adjusted_x <- st_coordinates(aligned_points)[, 1]
-lidar_footprints$linearly_adjusted_y <- st_coordinates(aligned_points)[, 2]
-
-lidar_footprints_linearly_adjusted <- st_as_sf(
-  st_drop_geometry(lidar_footprints), 
-  coords = c("linearly_adjusted_x", "linearly_adjusted_y"), 
-  crs = 3857
+# Run positional correction optimization with default Euclidean distance
+corrected_positions <- positional_correction(
+  lidar_footprints = lidar_footprints_linearly_adjusted,
+  input_rast = dem_rast,
+  minimizing_method = "euclidean",  # Default method
+  target_variable = "mean",
+  lidar_value = "elev_lowestmode",
+  buf = 12.5,
+  crs_code = 3857,
+  parallel = TRUE
 )
 
-# Run positional correction optimization
-corrected_positions <- positional_correction(
+# Alternative: Using DTW distance
+corrected_positions_dtw <- positional_correction(
   lidar_footprints = lidar_footprints_linearly_adjusted,
   input_rast = dem_rast,
   minimizing_method = "dtw",
@@ -144,11 +146,29 @@ corrected_positions <- positional_correction(
   crs_code = 3857,
   parallel = TRUE
 )
+```
 
+## Comparing Different Distance Metrics
 
-# Extract DEM values for the final adjusted points
-corrected_positions_dem <- terra::extract(dem_rast, corrected_positions[[2]])
-names(corrected_positions_dem) <- c("ID", "dem")
+You can compare the results of different distance metrics:
+
+```{r compare_metrics, eval=FALSE}
+# Function to calculate metrics
+calculate_metrics <- function(positions, dem_rast, lidar_value) {
+    dem_values <- terra::extract(dem_rast, positions)
+    lidar_values <- positions[[lidar_value]]
+    
+    # Calculate various metrics
+    metrics <- perform_distance(lidar_values, dem_values$mean)
+    return(metrics)
+}
+
+# Compare results
+euclidean_metrics <- calculate_metrics(corrected_positions[[2]], dem_rast, "elev_lowestmode")
+dtw_metrics <- calculate_metrics(corrected_positions_dtw[[2]], dem_rast, "elev_lowestmode")
+
+print(paste("Euclidean Distance:", euclidean_metrics$distance))
+print(paste("DTW Distance:", dtw_metrics$distance))
 ```
 
 ## Evaluation and Visualization
@@ -289,3 +309,40 @@ The `salpa` package provides a comprehensive workflow for adjusting satellite Li
    - Lower Mean Absolute Error (MAE)
 
 This two-step approach helps improve the spatial accuracy of satellite LiDAR data, making it more suitable for various applications in remote sensing and geospatial analysis.
+
+## Distance Metrics
+
+The package provides several distance metrics for comparing sequences:
+
+1. **Euclidean Distance** (Default)
+   - Standard point-to-point distance calculation
+   - Computed only on complete pairs
+   - Normalized by the number of complete pairs
+   - Best for direct value comparisons
+
+2. **Dynamic Time Warping (DTW)**
+   - Handles temporal shifts and warping
+   - Uses step patterns that can skip NA values
+   - Useful for sequences with timing differences
+
+3. **Manhattan Distance**
+   - Sum of absolute differences
+   - Less sensitive to outliers than Euclidean
+   - Good for grid-like movements
+
+4. **Correlation Distance**
+   - Based on Pearson correlation
+   - Captures pattern similarity regardless of scale
+   - Requires at least 2 complete pairs
+
+5. **Area Distance**
+   - Measures area between curves
+   - Uses linear interpolation for NA values
+   - Good for overall trajectory comparison
+
+6. **Hausdorff Distance**
+   - Maximum minimum distance between sequences
+   - Captures worst-case deviations
+   - Considers only non-NA values
+
+Each metric handles NA values appropriately and can be selected using the `minimizing_method` parameter in relevant functions.

@@ -24,6 +24,7 @@ devtools::install_github("naru-T/salpa")
 
 - **Linear Alignment**: Corrects systematic linear offsets in LiDAR data
 - **Positional Correction**: Optimizes point positions using genetic algorithms
+- **Multiple Distance Metrics**: Supports various distance calculations (Euclidean, DTW, Manhattan, etc.)
 - **Flexible Buffer Options**: Customizable buffer sizes for point adjustments
 - **Parallel Processing**: Support for parallel computation in optimization
 
@@ -33,7 +34,7 @@ devtools::install_github("naru-T/salpa")
 - sf: For spatial data handling
 - GA: For genetic algorithm optimization
 - exactextractr: For raster value extraction
-- dtw: For dynamic time warping calculations
+- stats: For statistical calculations
 - dplyr: For data manipulation
 
 ### Suggested Packages
@@ -62,7 +63,7 @@ aligned_points <- linear_alignment(lidar_footprints, crs_code = 3857)
 corrected_positions <- positional_correction(
   lidar_footprints = aligned_points,
   input_rast = dem_rast,           # Your reference DEM
-  minimizing_method = "dtw",
+  minimizing_method = "euclidean", # Default method, others available: "dtw", "manhattan", "correlation", "area", "hausdorff"
   target_variable = "mean",
   lidar_value = "elev_lowestmode", # Column containing LiDAR elevation values
   buf = 12.5,                      # Buffer size in meters
@@ -71,11 +72,24 @@ corrected_positions <- positional_correction(
 )
 ```
 
+## Distance Metrics
+
+The package supports multiple distance metrics for comparing sequences:
+
+1. **Euclidean** (default): Standard point-to-point distance
+2. **DTW**: Dynamic Time Warping for sequence alignment
+3. **Manhattan**: Sum of absolute differences
+4. **Correlation**: Based on Pearson correlation
+5. **Area**: Area between curves
+6. **Hausdorff**: Maximum minimum distance
+
+Each metric handles NA values appropriately and can be selected using the `minimizing_method` parameter.
+
 ## Documentation
 
 For more detailed information and examples, please refer to:
 - Package vignette: `vignette("salpa")`
-- Function documentation: `?linear_alignment`, `?positional_correction`
+- Function documentation: `?linear_alignment`, `?positional_correction`, `?perform_distance`
 
 ## Contributing
 

@@ -24,7 +24,8 @@ minimize_loss(
 
 \item{input_rast}{referenced raster object for extraction}
 
-\item{minimizing_method}{character string for the minimizing method ("dtw" is only supported)}
+\item{minimizing_method}{character string for the minimizing method. Default is "euclidean".
+Options are "dtw", "euclidean", "manhattan", "correlation", "area", "hausdorff".}
 
 \item{target_variable}{character string for the target variable (min, max, mean, median, etc.). See exact_extract}
 

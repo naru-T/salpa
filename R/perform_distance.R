@@ -13,7 +13,7 @@
 #' @param seq2 A numeric vector representing the second sequence.
 #' @param method Character string specifying which distance metric to calculate.
 #'        Options are "dtw", "euclidean", "manhattan", "correlation", "area", "hausdorff".
-#'        Default is "dtw".
+#'        Default is "euclidean".
 #' @return A list containing the selected distance metric and diagnostic information:
 #'   \item{distance}{The calculated distance value}
 #'   \item{completeness}{Proportion of complete (non-NA) pairs}
@@ -21,17 +21,17 @@
 #' @examples
 #' seq1 <- c(1, 2, NA, 4, 5)
 #' seq2 <- c(2, NA, 4, 5, 6)
-#' # Calculate DTW distance
+#' # Calculate Euclidean distance (default)
 #' result <- perform_distance(seq1, seq2)
-#' # Calculate Euclidean distance
-#' result <- perform_distance(seq1, seq2, method = "euclidean")
+#' # Calculate DTW distance
+#' result <- perform_distance(seq1, seq2, method = "dtw")
 #' print(result$distance)
 #' print(result$completeness)
 #' print(result$valid)
 #' @importFrom dtw dtw
 #' @importFrom stats cor complete.cases na.omit approx
 #' @export
-perform_distance <- function(seq1, seq2, method = "dtw") {
+perform_distance <- function(seq1, seq2, method = "euclidean") {
     # Input validation
     if (length(seq1) != length(seq2)) {
         stop("Sequences must have equal length")

@@ -12,7 +12,6 @@
 #' @format A GeoPackage file containing a simple feature collection with the following attributes:
 #' \describe{
 #'   \item{shot_number}{Unique identifier for each LiDAR shot}
-#'   \item{gedi_dem}{Elevation measurement from the LiDAR sensor}
 #'   \item{geometry}{Point geometry in WGS84 (EPSG:4326) coordinate system}
 #' }
 #' @source Sample data extracted from GEDI L2A data product
