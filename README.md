@@ -1,7 +1,7 @@
 # salpa: Satellite LiDAR Point Adjustment <img src="inst/hex/salpa_hex.png" align="right" height="139" />
 
 <!-- badges: start -->
-[![R-CMD-check](https://github.com/naru-T/salpa/workflows/R-CMD-check/badge.svg)](https://github.com/naru-T/salpa/actions)
+[![R-CMD-check](https://github.com/naru-T/salpa/actions/workflows/check-standard.yaml/badge.svg)](https://github.com/naru-T/salpa/actions/workflows/check-standard.yaml)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 <!-- badges: end -->
 

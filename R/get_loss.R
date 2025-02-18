@@ -25,7 +25,7 @@ get_loss <- function(lidar_footprints, add_x, add_y, buf, input_rast, minimizing
     loss_ <- out |>
                     st_drop_geometry() |>
                     summarise(
-                        loss_value = perform_dtw(lidar_val, ref_val)
+                        loss_value = perform_distance(lidar_val, ref_val, method = minimizing_method)$distance
                     )
 
     out <- data.frame(
