@@ -4,7 +4,7 @@
 \alias{perform_distance}
 \title{Calculate Distance Metric Between Two Sequences}
 \usage{
-perform_distance(seq1, seq2, method = "dtw")
+perform_distance(seq1, seq2, method = "euclidean")
 }
 \arguments{
 \item{seq1}{A numeric vector representing the first sequence.}
@@ -13,7 +13,7 @@ perform_distance(seq1, seq2, method = "dtw")
 
 \item{method}{Character string specifying which distance metric to calculate.
 Options are "dtw", "euclidean", "manhattan", "correlation", "area", "hausdorff".
-Default is "dtw".}
+Default is "euclidean".}
 }
 \value{
 A list containing the selected distance metric and diagnostic information:
@@ -36,10 +36,10 @@ commonly used in trajectory analysis. Each metric handles NA values appropriatel
 \examples{
 seq1 <- c(1, 2, NA, 4, 5)
 seq2 <- c(2, NA, 4, 5, 6)
-# Calculate DTW distance
+# Calculate Euclidean distance (default)
 result <- perform_distance(seq1, seq2)
-# Calculate Euclidean distance
-result <- perform_distance(seq1, seq2, method = "euclidean")
+# Calculate DTW distance
+result <- perform_distance(seq1, seq2, method = "dtw")
 print(result$distance)
 print(result$completeness)
 print(result$valid)

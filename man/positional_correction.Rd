@@ -7,7 +7,7 @@
 positional_correction(
   lidar_footprints,
   input_rast,
-  minimizing_method = "dtw",
+  minimizing_method = "euclidean",
   target_variable,
   buf = 12.5,
   crs_code,
@@ -20,32 +20,33 @@ positional_correction(
 )
 }
 \arguments{
-\item{lidar_footprints}{sf object containing satellite LiDAR footprints}
+\item{lidar_footprints}{sf object containing satellite LiDAR footprints.}
 
-\item{input_rast}{raster object for reference data}
+\item{input_rast}{Raster object for reference data.}
 
-\item{minimizing_method}{character string for the minimizing method (default: "dtw")}
+\item{minimizing_method}{Character string for the minimizing method. Default is "euclidean".
+Options include "dtw", "euclidean", "manhattan", "correlation", "area", "hausdorff".}
 
-\item{target_variable}{character string for the target variable}
+\item{target_variable}{Character string for the target variable.}
 
-\item{buf}{numeric value for buffer size (default: 12.5)}
+\item{buf}{Numeric value for buffer size (default: 12.5).}
 
-\item{crs_code}{numeric value for CRS code}
+\item{crs_code}{Numeric value for CRS code.}
 
-\item{lidar_value}{name of the column containing LiDAR measurement values}
+\item{lidar_value}{Name of the column containing LiDAR measurement values.}
 
-\item{lower_bounds}{numeric vector for lower bounds in GA (default: c(-30, -30))}
+\item{lower_bounds}{Numeric vector for lower bounds in the genetic algorithm (default: c(-30, -30)).}
 
-\item{upper_bounds}{numeric vector for upper bounds in GA (default: c(30, 30))}
+\item{upper_bounds}{Numeric vector for upper bounds in the genetic algorithm (default: c(30, 30)).}
 
-\item{pop_size}{numeric value for population size in GA (default: 50)}
+\item{pop_size}{Numeric value for population size in the genetic algorithm (default: 50).}
 
-\item{max_iter}{numeric value for maximum iterations in GA (default: 100)}
+\item{max_iter}{Numeric value for maximum iterations in the genetic algorithm (default: 100).}
 
-\item{parallel}{logical value for parallel processing}
+\item{parallel}{Logical value for parallel processing (default: FALSE).}
 }
 \value{
-list containing optimization results and corrected positions
+List containing optimization results and corrected positions.
 }
 \description{
 This function performs positional correction on satellite LiDAR footprints using genetic algorithm optimization.
