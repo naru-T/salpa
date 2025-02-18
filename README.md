@@ -1,7 +1,6 @@
-# salpa: Satellite LiDAR Point Adjustment <img src="inst/hex/salpa_hex.png" align="right" height="139" />
+# salpa: Satellite LiDAR Point Adjustment <img src="inst/hex/salpa_hex.png" align="right" height="150" />
 
 <!-- badges: start -->
-[![R-CMD-check](https://github.com/naru-T/salpa/actions/workflows/check-standard.yaml/badge.svg)](https://github.com/naru-T/salpa/actions/workflows/check-standard.yaml)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 <!-- badges: end -->
 
@@ -25,10 +24,8 @@ devtools::install_github("naru-T/salpa")
 
 - **Linear Alignment**: Corrects systematic linear offsets in LiDAR data
 - **Positional Correction**: Optimizes point positions using genetic algorithms
-- **Elevation Comparison**: Tools for comparing LiDAR elevations with reference DEMs
 - **Flexible Buffer Options**: Customizable buffer sizes for point adjustments
 - **Parallel Processing**: Support for parallel computation in optimization
-- **Visualization Tools**: Functions for visualizing adjustments and improvements
 
 ## Dependencies
 
