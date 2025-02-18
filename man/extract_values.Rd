@@ -4,12 +4,12 @@
 \alias{extract_values}
 \title{Extract values of input raster data in the buffered data}
 \usage{
-extract_values(buffered_data, input_raster, target_variable)
+extract_values(buffered_data, input_rast, target_variable)
 }
 \arguments{
 \item{buffered_data}{sf object with buffered data}
 
-\item{input_raster}{raster object for extraction}
+\item{input_rast}{raster object for extraction}
 
 \item{target_variable}{character string for the target variable (min, max, mean, median, etc.). See exact_extract}
 }
