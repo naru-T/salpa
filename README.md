@@ -1,4 +1,4 @@
-# salpa: Satellite LiDAR Point Adjustment
+# salpa: Satellite LiDAR Point Adjustment <img src="inst/hex/salpa_hex.png" align="right" height="139" />
 
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/naru-T/salpa/workflows/R-CMD-check/badge.svg)](https://github.com/naru-T/salpa/actions)
@@ -105,3 +105,7 @@ citation("salpa")
 For questions and feedback:
 - GitHub issues: [https://github.com/naru-T/salpa/issues](https://github.com/naru-T/salpa/issues)
 - Email: rsnaru.jp@gmail.com 
+
+## Notes
+
+The photo used in the hex sticker is from [wikipedia](https://en.wikipedia.org/wiki/Salp#/media/File:Sea_Salp_Chain.jpg).
