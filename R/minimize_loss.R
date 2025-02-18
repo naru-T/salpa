@@ -1,7 +1,7 @@
 #' Minimize loss
 #'
 #' @param lidar_footprints sf object containing satellite LiDAR footprints
-#' @param input_raster referenced raster object for extraction
+#' @param input_rast referenced raster object for extraction
 #' @param minimizing_method character string for the minimizing method ("dtw" is only supported)
 #' @param target_variable character string for the target variable (min, max, mean, median, etc.). See exact_extract
 #' @param buf numeric value for buf size. Default is 12.5
@@ -16,7 +16,7 @@
 #' @importFrom stats na.omit
 #' @return list with optimization results
 #' @export
-minimize_loss <- function(lidar_footprints, input_raster, minimizing_method, target_variable, buf, crs_code, lidar_value, lower_bounds, upper_bounds, pop_size, max_iter, parallel) {
+minimize_loss <- function(lidar_footprints, input_rast, minimizing_method, target_variable, buf, crs_code, lidar_value, lower_bounds, upper_bounds, pop_size, max_iter, parallel) {
 
     if (dim(lidar_footprints)[1] == 0) {
         print(paste("Skipping because of no high quality data found"))
@@ -24,7 +24,7 @@ minimize_loss <- function(lidar_footprints, input_raster, minimizing_method, tar
     }
 
     objective_function <- function(x, y) {
-        res <- get_loss(lidar_footprints = lidar_footprints, add_x = x, add_y = y, buf = buf, input_raster = input_raster, minimizing_method = minimizing_method, target_variable = target_variable, crs_code = crs_code, lidar_value = lidar_value)
+        res <- get_loss(lidar_footprints = lidar_footprints, add_x = x, add_y = y, buf = buf, input_rast = input_rast, minimizing_method = minimizing_method, target_variable = target_variable, crs_code = crs_code, lidar_value = lidar_value)
         out <- res$loss_value
         if (is.na(out)) {
             print(paste("NA values produced at x: ", x, " y: ", y))

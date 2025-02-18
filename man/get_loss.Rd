@@ -9,7 +9,7 @@ get_loss(
   add_x,
   add_y,
   buf,
-  input_raster,
+  input_rast,
   minimizing_method,
   target_variable,
   crs_code,
@@ -25,7 +25,7 @@ get_loss(
 
 \item{buf}{numeric value for buffer size}
 
-\item{input_raster}{raster object for extraction}
+\item{input_rast}{raster object for reference data}
 
 \item{minimizing_method}{character string for the minimizing method}
 

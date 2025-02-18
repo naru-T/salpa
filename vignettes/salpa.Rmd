@@ -34,6 +34,8 @@ You can install the development version of salpa from GitHub:
 devtools::install_github("naru-T/salpa")
 ```
 
+Note: The package is currently under development. Please check the GitHub repository at https://github.com/naru-T/salpa for the latest version and updates.
+
 ## Required Packages
 
 First, let's load all necessary packages:
@@ -51,11 +53,12 @@ library(elevatr)
 library(raster)
 library(ggplot2)
 library(dplyr)
+library(tidyr)
 ```
 
 ## Data Preparation
 
-We'll use a sample dataset of GEDI L2A shots (a series of footprints) from Nikko, Japan, included with the package. The data has been preprocessed using quality control flags (degrade_flag and quality_flag) to ensure data quality. The elevation values (`gedi_dem`) have been calibrated with geoid from elev_lowestmode of the GEDI L2A data product. We'll compare these LiDAR footprints with a reference DEM:
+We'll use a sample dataset of GEDI L2A shots (a series of footprints) from Nikko, Japan, included with the package. The data has been preprocessed using quality control flags (degrade_flag and quality_flag) to ensure data quality.  `elev_lowestmode` of the GEDI L2A data product has been considered as the GEDI-derived DEM. We'll compare these LiDAR footprints with a reference DEM:
 
 ```{r data_prep, eval=FALSE}
 # Get the path to the sample data included with the package
@@ -104,14 +107,14 @@ We'll use a reference DEM to evaluate and optimize our adjustments:
 
 ```{r dem_prep, eval=FALSE}
 # Get reference DEM
-dem <- get_elev_raster(bbox_sf, z = 12, clip = "bbox")
-dem_3857 <- projectRaster(dem, crs = 3857)
-dem_rast <- rast(dem_3857)
+dem <- elevatr::get_elev_raster(bbox_sf, z = 12, clip = "bbox")
+dem_3857 <- raster::projectRaster(dem, crs = 3857)
+dem_rast <- terra::rast(dem_3857)
 
 # Extract DEM values for comparison
-original_dem <- extract(dem_rast, original_sf)
+original_dem <- terra::extract(dem_rast, original_sf)
 names(original_dem) <- c("ID", "dem")
-linearly_adjusted_dem <- extract(dem_rast, linearly_adjusted_sf)
+linearly_adjusted_dem <- terra::extract(dem_rast, linearly_adjusted_sf)
 names(linearly_adjusted_dem) <- c("ID", "dem")
 ```
 
@@ -130,30 +133,22 @@ lidar_footprints_linearly_adjusted <- st_as_sf(
   crs = 3857
 )
 
-# Run positional adjustment optimization
-positional_out <- run_analysis(
+# Run positional correction optimization
+corrected_positions <- positional_correction(
   lidar_footprints = lidar_footprints_linearly_adjusted,
-  input_raster = dem_rast,
+  input_rast = dem_rast,
   minimizing_method = "dtw",
   target_variable = "mean",
-  lidar_value = "gedi_dem",
+  lidar_value = "elev_lowestmode",
   buf = 12.5,
   crs_code = 3857,
   parallel = TRUE
 )
 
-# Apply the optimized adjustments
-positional_adjusted <- positional_correction(
-  lidar_footprints_linearly_adjusted, 
-  positional_out$best_x, 
-  positional_out$best_y, 
-  12.5, 
-  3857
-)
 
 # Extract DEM values for the final adjusted points
-positional_adjusted_dem <- extract(dem_rast, st_centroid(positional_adjusted))
-names(positional_adjusted_dem) <- c("ID", "dem")
+corrected_positions_dem <- terra::extract(dem_rast, corrected_positions[[2]])
+names(corrected_positions_dem) <- c("ID", "dem")
 ```
 
 ## Evaluation and Visualization
@@ -166,17 +161,17 @@ We can visualize how the adjustments affect the elevation differences:
 # Create difference data frame
 difference_df <- data.frame(
     index = 1:nrow(lidar_footprints_linearly_adjusted),
-    original = as.numeric(lidar_footprints_linearly_adjusted$gedi_dem) - 
+    original = as.numeric(lidar_footprints_linearly_adjusted$elev_lowestmode) - 
               as.numeric(original_dem$dem),
-    linearlyadjusted = as.numeric(lidar_footprints_linearly_adjusted$gedi_dem) - 
+    linearly_adjusted = as.numeric(lidar_footprints_linearly_adjusted$elev_lowestmode) - 
                       as.numeric(linearly_adjusted_dem$dem),
-    locationadjusted = as.numeric(lidar_footprints_linearly_adjusted$gedi_dem) - 
-                      as.numeric(positional_adjusted_dem$dem)
+    positionally_corrected = as.numeric(lidar_footprints_linearly_adjusted$elev_lowestmode) - 
+                      as.numeric(corrected_positions_dem$dem)
 )
 
 # Convert to long format and plot
 difference_long <- difference_df %>%    
-    pivot_longer(cols = c(original, linearlyadjusted, locationadjusted),
+    tidyr::pivot_longer(cols = c(original, linearly_adjusted, positionally_corrected),
                 names_to = "adjustment",
                 values_to = "difference")
 
@@ -184,8 +179,8 @@ ggplot(difference_long, aes(x = index, y = difference, color = adjustment)) +
     geom_line(linewidth = 0.8) +
     geom_point(size = 1.5, alpha = 0.7) +   
     scale_color_manual(values = c("original" = "#2C3E50",
-                                 "linearlyadjusted" = "#95A5A6",
-                                 "locationadjusted" = "#E74C3C"),
+                                 "linearly_adjusted" = "#95A5A6",
+                                 "positionally_corrected" = "#E74C3C"),
                       labels = c("Raw DEM",
                                "Linearly Aligned DEM",
                                "Positionally Adjusted DEM")) +
@@ -201,15 +196,15 @@ Compare the relationships between LiDAR and DEM elevations:
 
 ```{r scatter_plots, eval=FALSE}
 scatter_df <- data.frame(
-    reference = as.numeric(lidar_footprints_linearly_adjusted$gedi_dem),
+    reference = as.numeric(lidar_footprints_linearly_adjusted$elev_lowestmode),
     raw = as.numeric(original_dem$dem),
     linear = as.numeric(linearly_adjusted_dem$dem),
-    location = as.numeric(positional_adjusted_dem$dem)
+    location = as.numeric(corrected_positions_dem$dem)
 ) %>%
-    pivot_longer(cols = c(raw, linear, location),
+    tidyr::pivot_longer(cols = c(raw, linear, location),
                 names_to = "adjustment",
                 values_to = "adjusted_value") %>%
-    mutate(adjustment = factor(adjustment, 
+    dplyr::mutate(adjustment = factor(adjustment, 
                              levels = c("raw", "linear", "location")))
 
 # Calculate R-squared values
@@ -242,10 +237,10 @@ Calculate MAE for each adjustment method:
 
 ```{r mae_calc, eval=FALSE}
 mae_df <- data.frame(
-    reference = as.numeric(lidar_footprints_linearly_adjusted$gedi_dem),
+    reference = as.numeric(lidar_footprints_linearly_adjusted$elev_lowestmode),
     raw = as.numeric(original_dem$dem),
     linear = as.numeric(linearly_adjusted_dem$dem),
-    location = as.numeric(positional_adjusted_dem$dem)
+    location = as.numeric(corrected_positions_dem$dem)
 )
 
 mae_values <- mae_df %>%
@@ -264,7 +259,7 @@ Finally, visualize the spatial distribution of points:
 
 ```{r spatial_viz, eval=FALSE}
 tmap_mode("plot")
-tm <- tm_shape(positional_adjusted, bbox = bbox_4326) +
+tm <- tm_shape(corrected_positions[[2]], bbox = bbox_4326) +
         tm_symbols(col = "red", shape = 20, size = 0.1) +
     tm_shape(original_sf, bbox = bbox_4326) +
         tm_symbols(col = "black", shape = 3, size = 0.1) +

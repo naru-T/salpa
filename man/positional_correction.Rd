@@ -2,24 +2,51 @@
 % Please edit documentation in R/positional_correction.R
 \name{positional_correction}
 \alias{positional_correction}
-\title{Positional adjustment of satellite LiDAR footprints}
+\title{Positional correction of satellite LiDAR footprints}
 \usage{
-positional_correction(lidar_footprints, add_x, add_y, buf, crs_code)
+positional_correction(
+  lidar_footprints,
+  input_rast,
+  minimizing_method = "dtw",
+  target_variable,
+  buf = 12.5,
+  crs_code,
+  lidar_value,
+  lower_bounds = c(-30, -30),
+  upper_bounds = c(30, 30),
+  pop_size = 50,
+  max_iter = 100,
+  parallel = FALSE
+)
 }
 \arguments{
-\item{lidar_footprints}{Input satellite LiDAR footprints as an sf object}
+\item{lidar_footprints}{sf object containing satellite LiDAR footprints}
 
-\item{add_x}{X-axis offset}
+\item{input_rast}{raster object for reference data}
 
-\item{add_y}{Y-axis offset}
+\item{minimizing_method}{character string for the minimizing method (default: "dtw")}
 
-\item{buf}{Buffer size}
+\item{target_variable}{character string for the target variable}
 
-\item{crs_code}{Coordinate reference system code}
+\item{buf}{numeric value for buffer size (default: 12.5)}
+
+\item{crs_code}{numeric value for CRS code}
+
+\item{lidar_value}{name of the column containing LiDAR measurement values}
+
+\item{lower_bounds}{numeric vector for lower bounds in GA (default: c(-30, -30))}
+
+\item{upper_bounds}{numeric vector for upper bounds in GA (default: c(30, 30))}
+
+\item{pop_size}{numeric value for population size in GA (default: 50)}
+
+\item{max_iter}{numeric value for maximum iterations in GA (default: 100)}
+
+\item{parallel}{logical value for parallel processing}
 }
 \value{
-Adjusted satellite LiDAR footprints
+list containing optimization results and corrected positions
 }
 \description{
-This function adjusts the point locations of satellite LiDAR footprints with specified offsets.
+This function performs positional correction on satellite LiDAR footprints using genetic algorithm optimization.
 }

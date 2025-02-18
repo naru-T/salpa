@@ -6,7 +6,7 @@
 \usage{
 minimize_loss(
   lidar_footprints,
-  input_raster,
+  input_rast,
   minimizing_method,
   target_variable,
   buf,
@@ -22,7 +22,7 @@ minimize_loss(
 \arguments{
 \item{lidar_footprints}{sf object containing satellite LiDAR footprints}
 
-\item{input_raster}{referenced raster object for extraction}
+\item{input_rast}{referenced raster object for extraction}
 
 \item{minimizing_method}{character string for the minimizing method ("dtw" is only supported)}
 

@@ -1,6 +1,6 @@
 Package: salpa
 Title: Satellite LiDAR Point Adjustment
-Version: 0.0.0.9100
+Version: 0.0.0.9101
 Authors@R:
     person("Narumasa", "Tsutsumida", , "rsnaru.jp@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-6333-0301"))
@@ -13,7 +13,15 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 Suggests:
     knitr,
-    rmarkdown
+    rmarkdown,
+    terra,
+    tmap,
+    tmaptools,
+    elevatr,
+    raster,
+    ggplot2,
+    tidyr,
+    testthat (>= 3.0.0)
 VignetteBuilder: knitr
 Imports:
     dplyr,
