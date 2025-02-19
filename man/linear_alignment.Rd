@@ -7,25 +7,24 @@
 linear_alignment(sf_object, crs_code)
 }
 \arguments{
-\item{sf_object}{An sf object containing spatial features.}
+\item{sf_object}{An sf object containing spatial features. It must include a column named 'shot_number'.}
 
-\item{crs_code}{An integer representing the coordinate reference system (CRS) code to transform the sf object.}
+\item{crs_code}{An integer representing the coordinate reference system (CRS) code to which the sf object will be transformed.}
 }
 \value{
-An sf object with adjusted coordinates that best fit a line.
+An sf object with adjusted coordinates that best fit a line, including original coordinates stored in 'orig_x' and 'orig_y'.
 }
 \description{
-This function aligns satellite LiDAR footprints to a best fit line using genetic algorithm optimization.
-The sf object should be transformed to the specified (projected) CRS before using this function.
-The fitting is done by minimizing the perpendicular distances between the points and the line using a genetic algorithm (GA) optimization.
+This function aligns satellite LiDAR footprints to a best-fit line using an analytical total least squares approach.
+The method computes the principal component of the coordinates for each shot group to minimize the perpendicular distances
+between the points and the line, and then projects the points onto this line.
 }
 \examples{
 \dontrun{
 library(sf)
-library(GA)
 
 # Example usage
-sf_object <- st_read("path_to_your_shapefile.shp")
+sf_object <- st_read('path_to_your_shapefile.shp')
 crs_code <- 3857
 adjusted_sf <- linear_alignment(sf_object, crs_code)
 }
