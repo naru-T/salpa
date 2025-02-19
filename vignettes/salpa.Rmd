@@ -23,7 +23,7 @@ The `salpa` package provides tools for optimizing and adjusting satellite LiDAR 
 1. Linear Alignment: Aligns points to their best-fit line using genetic algorithm optimization
 2. Positional Correction: Fine-tunes point locations with specified offsets to minimize elevation differences
 
-The package offers multiple distance metrics for comparing sequences, making it flexible for different types of analyses.
+This vignette demonstrates the complete workflow for adjusting satellite LiDAR footprints using both methods.
 
 ## Installation
 
@@ -60,7 +60,7 @@ library(tidyr)
 
 We'll use a sample dataset of GEDI L2A shots (a series of footprints) from Nikko, Japan, included with the package. The data has been preprocessed using quality control flags (degrade_flag and quality_flag) to ensure data quality.  `elev_lowestmode` of the GEDI L2A data product has been considered as the GEDI-derived DEM. We'll compare these LiDAR footprints with a reference DEM:
 
-```{r data_prep, eval=FALSE}
+```{r data_prep, eval=TRUE}
 # Get the path to the sample data included with the package
 gpkg_path <- system.file("extdata", "gedi_l2a_shot_sample.gpkg", package = "salpa")
 
@@ -78,9 +78,9 @@ bbox_sf <- st_as_sf(bbox_polygon)
 
 ## Step 1: Linear Alignment
 
-The first step is to align the LiDAR points to their best-fit line. This helps correct systematic linear offsets in the data:
+The first step is to align the LiDAR points to their best-fit line using an analytical total least squares approach. In this method, for each shot group (identified by the first 12 characters of the 'shot_number'), the function computes the principal component (direction of maximum variance) and projects the points onto the line passing through the group centroid. This adjustment corrects systematic linear offsets in the data and stores the original coordinates in 'orig_x' and 'orig_y'.
 
-```{r linear_alignment, eval=FALSE}
+```{r linear_alignment, eval=TRUE}
 # Apply linear alignment
 aligned_points <- linear_alignment(lidar_footprints, 3857)
 
@@ -105,7 +105,7 @@ linearly_adjusted_sf <- st_as_sf(alignment_df,
 
 We'll use a reference DEM to evaluate and optimize our adjustments:
 
-```{r dem_prep, eval=FALSE}
+```{r dem_prep, eval=TRUE}
 # Get reference DEM
 dem <- elevatr::get_elev_raster(bbox_sf, z = 12, clip = "bbox")
 dem_3857 <- raster::projectRaster(dem, crs = 3857)
@@ -120,14 +120,24 @@ names(linearly_adjusted_dem) <- c("ID", "dem")
 
 ## Step 3: Positional Adjustment
 
-After linear alignment, we can further refine the point positions using genetic algorithm optimization. By default, the Euclidean distance metric is used, but you can specify other metrics based on your needs:
+After linear alignment, we can further refine the point positions using genetic algorithm optimization:
 
-```{r positional_adjustment, eval=FALSE}
-# Run positional correction optimization with default Euclidean distance
+```{r positional_adjustment, eval=TRUE}
+# Prepare data for positional adjustment
+lidar_footprints$linearly_adjusted_x <- st_coordinates(aligned_points)[, 1]
+lidar_footprints$linearly_adjusted_y <- st_coordinates(aligned_points)[, 2]
+
+lidar_footprints_linearly_adjusted <- st_as_sf(
+  st_drop_geometry(lidar_footprints), 
+  coords = c("linearly_adjusted_x", "linearly_adjusted_y"), 
+  crs = 3857
+)
+
+# Run positional correction optimization
 corrected_positions <- positional_correction(
   lidar_footprints = lidar_footprints_linearly_adjusted,
   input_rast = dem_rast,
-  minimizing_method = "euclidean",  # Default method
+  minimizing_method = "euclidean",
   target_variable = "mean",
   lidar_value = "elev_lowestmode",
   buf = 12.5,
@@ -135,40 +145,10 @@ corrected_positions <- positional_correction(
   parallel = TRUE
 )
 
-# Alternative: Using DTW distance
-corrected_positions_dtw <- positional_correction(
-  lidar_footprints = lidar_footprints_linearly_adjusted,
-  input_rast = dem_rast,
-  minimizing_method = "dtw",
-  target_variable = "mean",
-  lidar_value = "elev_lowestmode",
-  buf = 12.5,
-  crs_code = 3857,
-  parallel = TRUE
-)
-```
 
-## Comparing Different Distance Metrics
-
-You can compare the results of different distance metrics:
-
-```{r compare_metrics, eval=FALSE}
-# Function to calculate metrics
-calculate_metrics <- function(positions, dem_rast, lidar_value) {
-    dem_values <- terra::extract(dem_rast, positions)
-    lidar_values <- positions[[lidar_value]]
-    
-    # Calculate various metrics
-    metrics <- perform_distance(lidar_values, dem_values$mean)
-    return(metrics)
-}
-
-# Compare results
-euclidean_metrics <- calculate_metrics(corrected_positions[[2]], dem_rast, "elev_lowestmode")
-dtw_metrics <- calculate_metrics(corrected_positions_dtw[[2]], dem_rast, "elev_lowestmode")
-
-print(paste("Euclidean Distance:", euclidean_metrics$distance))
-print(paste("DTW Distance:", dtw_metrics$distance))
+# Extract DEM values for the final adjusted points
+corrected_positions_dem <- terra::extract(dem_rast, corrected_positions[[2]])
+names(corrected_positions_dem) <- c("ID", "dem")
 ```
 
 ## Evaluation and Visualization
@@ -177,7 +157,7 @@ print(paste("DTW Distance:", dtw_metrics$distance))
 
 We can visualize how the adjustments affect the elevation differences:
 
-```{r dem_difference, eval=FALSE}
+```{r dem_difference, eval=TRUE}
 # Create difference data frame
 difference_df <- data.frame(
     index = 1:nrow(lidar_footprints_linearly_adjusted),
@@ -214,7 +194,7 @@ ggplot(difference_long, aes(x = index, y = difference, color = adjustment)) +
 
 Compare the relationships between LiDAR and DEM elevations:
 
-```{r scatter_plots, eval=FALSE}
+```{r scatter_plots, eval=TRUE}
 scatter_df <- data.frame(
     reference = as.numeric(lidar_footprints_linearly_adjusted$elev_lowestmode),
     raw = as.numeric(original_dem$dem),
@@ -255,7 +235,7 @@ ggplot(scatter_df, aes(x = adjusted_value, y = reference)) +
 
 Calculate MAE for each adjustment method:
 
-```{r mae_calc, eval=FALSE}
+```{r mae_calc, eval=TRUE}
 mae_df <- data.frame(
     reference = as.numeric(lidar_footprints_linearly_adjusted$elev_lowestmode),
     raw = as.numeric(original_dem$dem),
@@ -277,7 +257,7 @@ print(mae_values)
 
 Finally, visualize the spatial distribution of points:
 
-```{r spatial_viz, eval=FALSE}
+```{r spatial_viz, eval=TRUE}
 tmap_mode("plot")
 tm <- tm_shape(corrected_positions[[2]], bbox = bbox_4326) +
         tm_symbols(col = "red", shape = 20, size = 0.1) +
@@ -309,40 +289,3 @@ The `salpa` package provides a comprehensive workflow for adjusting satellite Li
    - Lower Mean Absolute Error (MAE)
 
 This two-step approach helps improve the spatial accuracy of satellite LiDAR data, making it more suitable for various applications in remote sensing and geospatial analysis.
-
-## Distance Metrics
-
-The package provides several distance metrics for comparing sequences:
-
-1. **Euclidean Distance** (Default)
-   - Standard point-to-point distance calculation
-   - Computed only on complete pairs
-   - Normalized by the number of complete pairs
-   - Best for direct value comparisons
-
-2. **Dynamic Time Warping (DTW)**
-   - Handles temporal shifts and warping
-   - Uses step patterns that can skip NA values
-   - Useful for sequences with timing differences
-
-3. **Manhattan Distance**
-   - Sum of absolute differences
-   - Less sensitive to outliers than Euclidean
-   - Good for grid-like movements
-
-4. **Correlation Distance**
-   - Based on Pearson correlation
-   - Captures pattern similarity regardless of scale
-   - Requires at least 2 complete pairs
-
-5. **Area Distance**
-   - Measures area between curves
-   - Uses linear interpolation for NA values
-   - Good for overall trajectory comparison
-
-6. **Hausdorff Distance**
-   - Maximum minimum distance between sequences
-   - Captures worst-case deviations
-   - Considers only non-NA values
-
-Each metric handles NA values appropriately and can be selected using the `minimizing_method` parameter in relevant functions.

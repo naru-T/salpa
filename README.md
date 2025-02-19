@@ -115,7 +115,6 @@ citation("salpa")
 
 For questions and feedback:
 - GitHub issues: [https://github.com/naru-T/salpa/issues](https://github.com/naru-T/salpa/issues)
-- Email: rsnaru.jp@gmail.com 
 
 ## Notes
 

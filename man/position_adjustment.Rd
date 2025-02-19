@@ -16,7 +16,7 @@ position_adjustment(lidar_footprints, add_x, add_y, crs_code)
 \item{crs_code}{Coordinate reference system code}
 }
 \value{
-Adjusted satellite LiDAR footprints
+Adjusted satellite LiDAR footprints as an sf object with updated geometry
 }
 \description{
 This function adjusts the point locations of satellite LiDAR footprints with specified offsets.
