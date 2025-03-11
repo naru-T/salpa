@@ -4,8 +4,8 @@ Version: 0.0.1.0
 Authors@R:
     person("Narumasa", "Tsutsumida", , "rsnaru.jp@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-6333-0301"))
-Description: A package for optimizing and adjusting satellite LiDAR point positions using genetic algorithms.
-    The package provides tools for linear adjustment and location correction of spatial point data,
+Description: Optimizes and adjusts satellite LiDAR point positions using genetic algorithms.
+    Provides tools for linear adjustment and location correction of spatial point data,
     particularly focused on satellite-based LiDAR observations.
 License: GPL (>= 3)
 Encoding: UTF-8
