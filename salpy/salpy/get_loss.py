@@ -8,11 +8,33 @@ LiDAR point measurements and reference raster data.
 import dtw
 import numpy as np
 from geopandas import GeoDataFrame
-from scipy.spatial.distance import cityblock, correlation, euclidean
-from scipy.stats import hausdorff_distance
+from scipy.spatial.distance import cityblock, correlation, euclidean, directed_hausdorff
 
 from .extract_values import extract_values
 from .position_adjustment import position_adjustment
+
+
+# Custom Hausdorff distance function since scipy.stats.hausdorff_distance is not available
+def hausdorff_distance(u, v):
+    """
+    Compute the Hausdorff distance between two arrays.
+
+    Parameters
+    ----------
+    u : array_like
+        Input array.
+    v : array_like
+        Input array.
+
+    Returns
+    -------
+    float
+        The Hausdorff distance between arrays.
+    """
+    # Use scipy's directed_hausdorff function
+    forward, _, _ = directed_hausdorff(u, v)
+    backward, _, _ = directed_hausdorff(v, u)
+    return max(forward, backward)
 
 
 def get_loss(
