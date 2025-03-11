@@ -7,7 +7,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r, include = FALSE}
+```{r, include = FALSE, eval=FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
@@ -20,8 +20,8 @@ knitr::opts_chunk$set(
 
 The `salpa` package provides tools for optimizing and adjusting satellite LiDAR point positions using genetic algorithms. It focuses on two main types of adjustments:
 
-1. Linear Alignment: Aligns points to their best-fit line using genetic algorithm optimization
-2. Positional Correction: Fine-tunes point locations with specified offsets to minimize elevation differences
+1. Linear Alignment: Aligns points to their best-fit line using total least squares approach
+2. Positional Correction: Fine-tunes point locations with specified offsets to minimize elevation differences by using genetic algorithm optimization
 
 The package offers multiple distance metrics for comparing sequences, making it flexible for different types of analyses.
 
@@ -30,8 +30,8 @@ The package offers multiple distance metrics for comparing sequences, making it 
 You can install the development version of salpa from GitHub:
 
 ```r
-# install.packages("devtools")
-devtools::install_github("naru-T/salpa")
+# install.packages("remotes")
+remotes::install_github("naru-T/salpa")
 ```
 
 Note: The package is currently under development. Please check the GitHub repository at https://github.com/naru-T/salpa for the latest version and updates.
@@ -40,7 +40,7 @@ Note: The package is currently under development. Please check the GitHub reposi
 
 First, let's load all necessary packages:
 
-```{r setup, message=FALSE, warning=FALSE}
+```{r setup, message=FALSE, warning=FALSE, eval=FALSE}
 library(salpa)
 library(sf)
 library(terra)
@@ -48,7 +48,6 @@ library(exactextractr)
 library(GA)
 library(dtw)
 library(tmap)
-library(tmaptools)
 library(elevatr)
 library(raster)
 library(ggplot2)
@@ -74,56 +73,32 @@ bbox_4326 <- st_bbox(c(xmin = 139.40119, ymin = 36.86163,
 names(bbox_4326) <- c("left", "bottom", "right", "top")
 bbox_polygon <- st_as_sfc(bbox_4326)
 bbox_sf <- st_as_sf(bbox_polygon)
+
 ```
 
-## Step 1: Linear Alignment
-
-The first step is to align the LiDAR points to their best-fit line. This helps correct systematic linear offsets in the data:
-
-```{r linear_alignment, eval=FALSE}
-# Apply linear alignment
-aligned_points <- linear_alignment(lidar_footprints, 3857)
-
-# Extract original and adjusted coordinates
-alignment_df <- data.frame(
-  original_x = aligned_points$orig_x,
-  original_y = aligned_points$orig_y,
-  projected_x = st_coordinates(aligned_points)[, 1],
-  projected_y = st_coordinates(aligned_points)[, 2]
-)
-
-# Create sf objects for visualization
-original_sf <- st_as_sf(alignment_df,
-                       coords = c("original_x", "original_y"),
-                       crs = 3857)
-linearly_adjusted_sf <- st_as_sf(alignment_df,
-                                coords = c("projected_x", "projected_y"),
-                                crs = 3857)
-```
-
-## Step 2: Reference DEM Preparation
+## Reference DEM Preparation
 
 We'll use a reference DEM to evaluate and optimize our adjustments:
 
 ```{r dem_prep, eval=FALSE}
 # Get reference DEM
-dem <- elevatr::get_elev_raster(bbox_sf, z = 12, clip = "bbox")
-dem_3857 <- raster::projectRaster(dem, crs = 3857)
-dem_rast <- terra::rast(dem_3857)
+dem <- get_elev_raster(bbox_sf, z = 12, clip = "bbox")
+dem_3857 <- projectRaster(dem, crs = 3857)
+dem_rast <- rast(dem_3857)
 
 # Extract DEM values for comparison
-original_dem <- exact_extract(dem_rast, original_sf |> st_buffer(12.5), "mean", progress = FALSE)
-linearly_adjusted_dem <- exact_extract(dem_rast, linearly_adjusted_sf |> st_buffer(12.5), "mean", progress = FALSE )
+lidar_footprints_3857 <- st_transform(lidar_footprints, 3857)
+original_dem <- exact_extract(dem_rast, lidar_footprints_3857 |> st_buffer(12.5), "mean", progress = FALSE)
 ```
 
-## Step 3: Positional Adjustment
+## Positional Adjustment
 
-After linear alignment, we can further refine the point positions using genetic algorithm optimization. By default, the Euclidean distance metric is used, but you can specify other metrics based on your needs:
+we refine the point positions using genetic algorithm optimization. By default, the Euclidean distance metric is used, but you can specify other metrics based on your needs:
 
 ```{r positional_adjustment, eval=FALSE}
 # Run positional correction optimization with default Euclidean distance
-corrected_positions <- positional_correction(
-  lidar_footprints = lidar_footprints_linearly_adjusted,
+corrected_positions <- salpa::positional_correction(
+  lidar_footprints = lidar_footprints_3857,
   input_rast = dem_rast,
   minimizing_method = "euclidean",  # Default method
   target_variable = "mean",
@@ -133,9 +108,26 @@ corrected_positions <- positional_correction(
   parallel = TRUE
 )
 
-
 # Extract DEM values for the final adjusted points
 corrected_positions_dem <- exact_extract(dem_rast, corrected_positions[[2]] |> st_buffer(12.5), "mean", progress = FALSE)
+```
+
+`corrected_positions` is a list of sf objects. The first element is the original LiDAR footprints, and the second element is the adjusted points.
+```{r print_corrected_positions, eval=FALSE}
+print(corrected_positions[[1]])
+print(head(corrected_positions[[2]]))
+```
+
+
+## Optional: Linear Alignment
+
+The Linear alignment is optional. It aligns the LiDAR points to their best-fit line. This helps correct systematic linear offsets in the data:
+Now This example applies linear alignment to the original LiDAR footprints.
+
+```{r linear_alignment, eval=FALSE}
+# Apply linear alignment
+aligned_points <- linear_alignment(lidar_footprints, 3857)
+linearly_adjusted_dem <- exact_extract(dem_rast, aligned_points |> st_buffer(12.5), "mean", progress = FALSE )
 ```
 
 ## Evaluation and Visualization
@@ -147,12 +139,12 @@ We can visualize how the adjustments affect the elevation differences:
 ```{r dem_difference, eval=FALSE}
 # Create difference data frame
 difference_df <- data.frame(
-    index = 1:nrow(lidar_footprints_linearly_adjusted),
-    original = as.numeric(lidar_footprints_linearly_adjusted$elev_lowestmode) -
+    index = 1:nrow(lidar_footprints),
+    original = as.numeric(lidar_footprints$elev_lowestmode) -
               as.numeric(original_dem),
-    linearly_adjusted = as.numeric(lidar_footprints_linearly_adjusted$elev_lowestmode) -
+    linearly_adjusted = as.numeric(aligned_points$elev_lowestmode) -
                       as.numeric(linearly_adjusted_dem),
-    positionally_corrected = as.numeric(lidar_footprints_linearly_adjusted$elev_lowestmode) -
+    positionally_corrected = as.numeric(corrected_positions[[2]]$elev_lowestmode) -
                       as.numeric(corrected_positions_dem)
 )
 
@@ -183,7 +175,7 @@ Compare the relationships between LiDAR and DEM elevations:
 
 ```{r scatter_plots, eval=FALSE}
 scatter_df <- data.frame(
-    reference = as.numeric(lidar_footprints_linearly_adjusted$elev_lowestmode),
+    reference = as.numeric(lidar_footprints$elev_lowestmode),
     raw = as.numeric(original_dem),
     linear = as.numeric(linearly_adjusted_dem),
     location = as.numeric(corrected_positions_dem)
@@ -224,7 +216,7 @@ Calculate MAE for each adjustment method:
 
 ```{r mae_calc, eval=FALSE}
 mae_df <- data.frame(
-    reference = as.numeric(lidar_footprints_linearly_adjusted$elev_lowestmode),
+    reference = as.numeric(lidar_footprints$elev_lowestmode),
     raw = as.numeric(original_dem),
     linear = as.numeric(linearly_adjusted_dem),
     location = as.numeric(corrected_positions_dem)
@@ -248,17 +240,17 @@ Finally, visualize the spatial distribution of points:
 tmap_mode("plot")
 tm <- tm_shape(corrected_positions[[2]], bbox = bbox_4326) +
         tm_symbols(col = "red", shape = 20, size = 0.1) +
-    tm_shape(original_sf, bbox = bbox_4326) +
+    tm_shape(lidar_footprints, bbox = bbox_4326) +
         tm_symbols(col = "black", shape = 3, size = 0.1) +
     tm_shape(linearly_adjusted_sf, bbox = bbox_4326) +
         tm_symbols(col = "#b6b4b4", shape = 4, size = 0.1) +
     tm_layout(legend.position = c("left", "top")) +
-    tm_add_legend(type = "symbol",
+    tm_add_legend(type = "symbols",
                   labels = c("Positionally Adjusted",
                            "Original",
                            "Linearly Aligned"),
                   shape = c(20, 3, 4),
-                  col = c("red", "black", "#b6b4b4"),
+                  fill = c("red", "black", "#b6b4b4"),
                   size = c(1, 1, 1.1),
                   title = "Point Types")
 tm
@@ -268,14 +260,14 @@ tm
 
 The `salpa` package provides a comprehensive workflow for adjusting satellite LiDAR point positions:
 
-1. Linear alignment corrects systematic offsets by aligning points to their best-fit line
-2. Positional adjustment further refines point locations using genetic algorithm optimization
-3. The combination of both methods typically results in better alignment with reference DEMs, as shown by:
+1. Positional adjustment refines point locations using genetic algorithm optimization
+2. Linear alignment is optional. Itcorrects systematic offsets by aligning points to their best-fit line. However, in this demo, the result is not well presented.
+3. The positional adjustment typically results in better alignment with reference DEMs, as shown by:
    - Reduced elevation differences
    - Improved R² values in scatter plots
    - Lower Mean Absolute Error (MAE)
 
-This two-step approach helps improve the spatial accuracy of satellite LiDAR data, making it more suitable for various applications in remote sensing and geospatial analysis.
+This approach helps improve the spatial accuracy of satellite LiDAR data, making it more suitable for various applications in satellite LiDAR data analysis.
 
 ## Distance Metrics
 
