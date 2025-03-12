@@ -108,7 +108,7 @@ This project is licensed under the GPL-3 License - see the LICENSE file for deta
 If you use this package in your research, please cite it as:
 
 ```r
-citation("salpa")
+Tsutsumida N. (2025) salpa: Satellite LiDAR Point Adjustment, R package version 0.0.1.0, https://github.com/naru-T/salpa
 ```
 
 ## Contact
