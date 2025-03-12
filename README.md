@@ -97,7 +97,7 @@ Contributions are welcome! Please feel free to submit a Pull Request. For major 
 
 ## Author
 
-Narumasa Tsutsumida (ORCID: 0000-0002-6333-0301)
+Tsutsumida N. (ORCID: 0000-0002-6333-0301)
 
 ## License
 
@@ -107,8 +107,8 @@ This project is licensed under the GPL-3 License - see the LICENSE file for deta
 
 If you use this package in your research, please cite it as:
 
-```r
-citation("salpa")
+```
+Tsutsumida N. (2025) salpa: Satellite LiDAR Point Adjustment, R package version 0.0.1.0, https://github.com/naru-T/salpa/releases/tag/0.0.1.0
 ```
 
 ## Contact
