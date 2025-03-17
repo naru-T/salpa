@@ -9,7 +9,7 @@ Description: Optimizes and adjusts satellite LiDAR point positions using genetic
     particularly focused on satellite-based LiDAR observations.
 License: GPL (>= 3)
 Encoding: UTF-8
-Roxygen: list(markdown = TRUE)
+Roxygen: list(markdown = TRUE, r6 = FALSE, load = "installed")
 RoxygenNote: 7.3.2
 Suggests:
     knitr,
