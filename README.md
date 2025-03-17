@@ -2,6 +2,7 @@
 
 <!-- badges: start -->
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![DOI](https://zenodo.org/badge/929837682.svg)](https://doi.org/10.5281/zenodo.15041709)
 <!-- badges: end -->
 
 ## Overview
@@ -108,7 +109,7 @@ This project is licensed under the GPL-3 License - see the LICENSE file for deta
 If you use this package in your research, please cite it as:
 
 ```r
-Tsutsumida N. (2025) salpa: Satellite LiDAR Point Adjustment, R package version 0.0.1.0, https://github.com/naru-T/salpa
+Tsutsumida N. (2025) salpa: Satellite LiDAR Point Adjustment, R package version 0.0.1.1, https://github.com/naru-T/salpa
 ```
 
 ## Contact
