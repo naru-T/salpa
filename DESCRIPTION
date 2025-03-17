@@ -29,3 +29,5 @@ Imports:
     GA,
     exactextractr,
     dtw
+Depends:
+    R (>= 4.1.0)
