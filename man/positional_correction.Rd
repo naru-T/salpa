@@ -16,7 +16,8 @@ positional_correction(
   upper_bounds = c(30, 30),
   pop_size = 50,
   max_iter = 100,
-  parallel = FALSE
+  parallel = FALSE,
+  geographic_coordinates = FALSE
 )
 }
 \arguments{
@@ -44,6 +45,9 @@ Options include "dtw", "euclidean", "manhattan", "correlation", "area", "hausdor
 \item{max_iter}{Numeric value for maximum iterations in the genetic algorithm (default: 100).}
 
 \item{parallel}{Logical value for parallel processing (default: FALSE).}
+
+\item{geographic_coordinates}{Logical value indicating if input coordinates are in geographic coordinates (default: FALSE).
+If TRUE, the bounds will be converted from meters to degrees.}
 }
 \value{
 List containing optimization results and corrected positions.
