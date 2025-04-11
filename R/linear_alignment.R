@@ -48,14 +48,14 @@ linear_alignment <- function(sf_object, crs_code) {
     # Transform to specified CRS
     sf_object <- st_transform(sf_object, crs_code)
     
-    # Extract unique shot groups (using the first 12 characters of shot_number)
-    shot_ids <- unique(substr(as.character(sf_object$shot_number), 1, 12))
+    # Extract unique shot groups (using the first 10 characters of shot_number)
+    shot_ids <- unique(substr(as.character(sf_object$shot_number), 1, 10))
     
     adjusted_sf_list <- list()
     
     for (shot in shot_ids) {
         # Subset the sf object for the current shot group
-        sf_subset <- sf_object[substr(as.character(sf_object$shot_number), 1, 12) == shot, ]
+        sf_subset <- sf_object[substr(as.character(sf_object$shot_number), 1, 10) == shot, ]
         
         # Extract coordinates
         coords <- st_coordinates(sf_subset)

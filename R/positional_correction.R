@@ -21,8 +21,8 @@
 #' @export
 positional_correction <- function(lidar_footprints, input_rast, minimizing_method = "euclidean",
                                     target_variable, buf = 12.5, crs_code, lidar_value,
-                                    lower_bounds = c(-30, -30),
-                                    upper_bounds = c(30, 30),
+                                    lower_bounds = c(-25, -25),
+                                    upper_bounds = c(25, 25),
                                     pop_size = 50,
                                     max_iter = 100,
                                     parallel = FALSE,
