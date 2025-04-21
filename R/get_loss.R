@@ -15,13 +15,13 @@
 #' @importFrom dplyr summarise
 #' @return data frame with summary statistics
 #' @export
-get_loss <- function(lidar_footprints, add_x, add_y, buf, input_rast, 
-                    minimizing_method = "euclidean", target_variable, 
+get_loss <- function(lidar_footprints, add_x, add_y, buf, input_rast,
+                    minimizing_method = "euclidean", target_variable,
                     crs_code, lidar_value) {
     posit_corrected_data <- position_adjustment(lidar_footprints, add_x, add_y, crs_code)
     buffered_data <- st_buffer(posit_corrected_data, buf)
     out <- extract_values(buffered_data, input_rast, target_variable)
-    
+
     lidar_val <- lidar_footprints[[lidar_value]] |> st_drop_geometry() |> as.numeric()
     ref_val <- out[["ref_val"]] |> st_drop_geometry() |> as.numeric()
     #WIP: option to apply different methods according to minimizing_method
@@ -37,6 +37,6 @@ get_loss <- function(lidar_footprints, add_x, add_y, buf, input_rast,
         buffer = buf,
         loss_value = loss_$loss_value
     )
-    
+
     return(out)
 }

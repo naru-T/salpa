@@ -42,11 +42,17 @@ positional_correction <- function(lidar_footprints, input_rast, minimizing_metho
         results <- minimize_loss(lidar_footprints, input_rast, minimizing_method,
                                  target_variable, buf, crs_code, lidar_value,
                                  lower_bounds, upper_bounds, pop_size, max_iter, parallel)
-        data.frame(best_x = results$best_x, best_y = results$best_y, best_value = results$best_value)
+        
+        # If best_value is 1000 (worst case), set offsets to 0
+        if (!is.null(results) && results$best_value == 1000) {
+            data.frame(best_x = 0, best_y = 0, best_value = results$best_value)
+        } else {
+            data.frame(best_x = results$best_x, best_y = results$best_y, best_value = results$best_value)
+        }
     },
     error = function(e) {
         warning("Loss minimization failed: ", e$message)
-        data.frame(best_x = NA, best_y = NA, best_value = NA)
+        data.frame(best_x = 0, best_y = 0, best_value = NA)
     })
 
     # Use default offsets (0, 0) if optimization failed
