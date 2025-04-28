@@ -1,6 +1,6 @@
 Package: salpa
 Title: Satellite LiDAR Point Adjustment
-Version: 0.0.1.3
+Version: 0.0.1.4
 Authors@R:
     person("Narumasa", "Tsutsumida", , "rsnaru.jp@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-6333-0301"))
@@ -28,6 +28,7 @@ Imports:
     sf,
     GA,
     exactextractr,
-    dtw
+    dtw,
+    pso
 Depends:
     R (>= 4.1.0)

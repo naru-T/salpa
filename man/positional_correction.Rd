@@ -12,11 +12,13 @@ positional_correction(
   buf = 12.5,
   crs_code,
   lidar_value,
-  lower_bounds = c(-30, -30),
-  upper_bounds = c(30, 30),
+  optimization_method = "ga",
+  lower_bounds = c(-25, -25),
+  upper_bounds = c(25, 25),
   pop_size = 50,
   max_iter = 100,
   parallel = FALSE,
+  pso_params = NULL,
   geographic_coordinates = FALSE
 )
 }
@@ -36,15 +38,20 @@ Options include "dtw", "euclidean", "manhattan", "correlation", "area", "hausdor
 
 \item{lidar_value}{Name of the column containing LiDAR measurement values.}
 
-\item{lower_bounds}{Numeric vector for lower bounds in the genetic algorithm (default: c(-30, -30)).}
+\item{optimization_method}{Character string for optimization method. Options are "ga" (genetic algorithm) or "pso" (particle swarm optimization). Default is "ga".}
 
-\item{upper_bounds}{Numeric vector for upper bounds in the genetic algorithm (default: c(30, 30)).}
+\item{lower_bounds}{Numeric vector for lower bounds in the optimization (default: c(-30, -30)).}
 
-\item{pop_size}{Numeric value for population size in the genetic algorithm (default: 50).}
+\item{upper_bounds}{Numeric vector for upper bounds in the optimization (default: c(30, 30)).}
 
-\item{max_iter}{Numeric value for maximum iterations in the genetic algorithm (default: 100).}
+\item{pop_size}{Numeric value for population size (GA) or swarm size (PSO) (default: 50).}
+
+\item{max_iter}{Numeric value for maximum iterations (default: 100).}
 
 \item{parallel}{Logical value for parallel processing (default: FALSE).}
+
+\item{pso_params}{List of additional parameters for PSO (default: NULL).
+List can include: w (inertia), c1 (cognitive learning factor), c2 (social learning factor).}
 
 \item{geographic_coordinates}{Logical value indicating if input coordinates are in geographic coordinates (default: FALSE).
 If TRUE, the bounds will be converted from meters to degrees.}
@@ -53,5 +60,5 @@ If TRUE, the bounds will be converted from meters to degrees.}
 List containing optimization results and corrected positions.
 }
 \description{
-This function performs positional correction on satellite LiDAR footprints using genetic algorithm optimization.
+This function performs positional correction on satellite LiDAR footprints using optimization algorithms.
 }
