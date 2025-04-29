@@ -56,76 +56,40 @@ linear_alignment <- function(sf_object, crs_code) {
         # Subset the sf object for the current shot group
         sf_subset <- sf_object[substr(as.character(sf_object$shot_number), 1, 10) == shot, ]
         
-        # Process in chunks of 250 if needed
-        n_points <- nrow(sf_subset)
-        if (n_points > 250) {
-            chunk_indices <- split(seq_len(n_points), ceiling(seq_len(n_points)/250))
-            chunk_results <- list()
-            
-            for (i in seq_along(chunk_indices)) {
-                chunk <- sf_subset[chunk_indices[[i]], ]
-                coords <- st_coordinates(chunk)
-                
-                # Process chunk
-                if (nrow(coords) == 1) {
-                    chunk$orig_x <- coords[1]
-                    chunk$orig_y <- coords[2]
-                    chunk$coords_x <- coords[1]
-                    chunk$coords_y <- coords[2]
-                } else {
-                    # Compute the centroid for this chunk
-                    centroid <- colMeans(coords)
-                    centered <- sweep(coords, 2, centroid)
-                    
-                    # Compute the covariance matrix and perform eigen decomposition
-                    cov_mat <- cov(centered)
-                    eig <- eigen(cov_mat)
-                    direction <- eig$vectors[,1]
-                    
-                    # Project points for this chunk
-                    projections <- t(apply(coords, 1, function(pt) {
-                        proj <- centroid + sum((pt - centroid) * direction) * direction
-                        return(proj)
-                    }))
-                    
-                    # Store coordinates for this chunk
-                    chunk$orig_x <- coords[,1]
-                    chunk$orig_y <- coords[,2]
-                    chunk$coords_x <- projections[,1]
-                    chunk$coords_y <- projections[,2]
-                }
-                
-                chunk_results[[i]] <- chunk
-            }
-            
-            # Combine chunks
-            sf_subset <- do.call(rbind, chunk_results)
+        # Extract coordinates
+        coords <- st_coordinates(sf_subset)
+        
+        # If there's only one point, use the point as is
+        if (nrow(coords) == 1) {
+            sf_subset$orig_x <- coords[1]
+            sf_subset$orig_y <- coords[2]
+            sf_subset$coords_x <- coords[1]
+            sf_subset$coords_y <- coords[2]
         } else {
-            # Original processing for small subsets
-            coords <- st_coordinates(sf_subset)
+            # Compute the centroid
+            centroid <- colMeans(coords)
             
-            if (nrow(coords) == 1) {
-                sf_subset$orig_x <- coords[1]
-                sf_subset$orig_y <- coords[2]
-                sf_subset$coords_x <- coords[1]
-                sf_subset$coords_y <- coords[2]
-            } else {
-                centroid <- colMeans(coords)
-                centered <- sweep(coords, 2, centroid)
-                cov_mat <- cov(centered)
-                eig <- eigen(cov_mat)
-                direction <- eig$vectors[,1]
-                
-                projections <- t(apply(coords, 1, function(pt) {
-                    proj <- centroid + sum((pt - centroid) * direction) * direction
-                    return(proj)
-                }))
-                
-                sf_subset$orig_x <- coords[,1]
-                sf_subset$orig_y <- coords[,2]
-                sf_subset$coords_x <- projections[,1]
-                sf_subset$coords_y <- projections[,2]
-            }
+            # Center the coordinates
+            centered <- sweep(coords, 2, centroid)
+            
+            # Compute the covariance matrix and perform eigen decomposition
+            cov_mat <- cov(centered)
+            eig <- eigen(cov_mat)
+            
+            # Get the principal eigenvector (direction of maximum variance)
+            direction <- eig$vectors[,1]
+            
+            # Project each point onto the line passing through the centroid in the direction of 'direction'
+            projections <- t(apply(coords, 1, function(pt) {
+                proj <- centroid + sum((pt - centroid) * direction) * direction
+                return(proj)
+            }))
+            
+            # Store original and projected coordinates
+            sf_subset$orig_x <- coords[,1]
+            sf_subset$orig_y <- coords[,2]
+            sf_subset$coords_x <- projections[,1]
+            sf_subset$coords_y <- projections[,2]
         }
         
         # Create an adjusted sf object with the new projected coordinates

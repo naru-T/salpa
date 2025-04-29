@@ -12,11 +12,15 @@ minimize_loss(
   buf,
   crs_code,
   lidar_value,
-  lower_bounds,
-  upper_bounds,
-  pop_size,
-  max_iter,
-  parallel
+  optimization_method = "ga",
+  lower_bounds = c(-30, -30),
+  upper_bounds = c(30, 30),
+  pop_size = 50,
+  max_iter = 100,
+  parallel = FALSE,
+  pso_params = NULL,
+  woa_params = NULL,
+  lbfgsb_params = NULL
 )
 }
 \arguments{
@@ -35,15 +39,26 @@ Options are "dtw", "euclidean", "manhattan", "correlation", "area", "hausdorff".
 
 \item{lidar_value}{name of the column containing LiDAR measurement values}
 
-\item{lower_bounds}{numeric vector for lower bounds in GA. Default is c(-30, -30)}
+\item{optimization_method}{character string for optimization method. Options are "ga" (genetic algorithm), "pso" (particle swarm optimization), "woa" (whale optimization algorithm), or "lbfgsb" (L-BFGS-B). Default is "ga".}
 
-\item{upper_bounds}{numeric vector for upper bounds in GA. Default is c(30, 30)}
+\item{lower_bounds}{numeric vector for lower bounds in optimization. Default is c(-30, -30)}
 
-\item{pop_size}{numeric value for population size in GA. Default is 50}
+\item{upper_bounds}{numeric vector for upper bounds in optimization. Default is c(30, 30)}
 
-\item{max_iter}{numeric value for maximum iterations in GA. Default is 100}
+\item{pop_size}{numeric value for population size (GA) or swarm size (PSO/WOA). Default is 50}
+
+\item{max_iter}{numeric value for maximum iterations. Default is 100}
 
 \item{parallel}{logical value for parallel processing. Default is FALSE}
+
+\item{pso_params}{list of additional parameters for PSO. Default is NULL.
+List can include: trace (logical), maxit (numeric), maxf (numeric), abstol (numeric), reltol (numeric), REPORT (numeric), trace.stats (logical)}
+
+\item{woa_params}{list of additional parameters for WOA. Default is NULL.
+List can include: trace (logical), batch_size (numeric for batch processing)}
+
+\item{lbfgsb_params}{list of additional parameters for L-BFGS-B. Default is NULL.
+List can include: factr (numeric), pgtol (numeric), trace (numeric), REPORT (integer)}
 }
 \value{
 list with optimization results
