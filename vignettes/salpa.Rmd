@@ -18,6 +18,7 @@ knitr::opts_chunk$set(
 
 `salpa` (Satellite Lidar Point Alignment) is an R package for improving the spatial accuracy of satellite lidar data through positional correction. It addresses the issue of horizontal positional errors in satellite lidar measurements by aligning them with high-resolution reference elevation models.
 
+
 The package implements various optimization algorithms and comparison metrics to find the optimal horizontal adjustment for lidar footprints. This vignette demonstrates the package's capabilities and compares the performance of different optimization methods.
 
 ## Installation
@@ -45,6 +46,7 @@ library(dplyr)
 
 Let's load the sample GEDI L2A data included with the package:
 
+
 ```{r}
 # Load GEDI L2A sample data
 gpkg_path <- system.file("extdata", "gedi_l2a_shot_sample.gpkg", package = "salpa")
@@ -66,6 +68,7 @@ bbox_4326 <- st_bbox(c(xmin = 139.40119, ymin = 36.86163,
                     crs = 4326)
 bbox_sf <- st_as_sf(st_as_sfc(bbox_4326))
 
+
 # Get reference DEM
 dem <- elevatr::get_elev_raster(bbox_sf, z = 13, clip = "bbox")
 dem_3857 <- raster::projectRaster(dem, crs = 3857)
@@ -80,6 +83,7 @@ plot(st_geometry(lidar_footprints_3857), add = TRUE, pch = 20, col = "red")
 ```
 
 ## Positional Adjustment
+
 
 Now let's apply positional adjustment using different optimization methods to see which one works best for our data.
 
@@ -373,6 +377,7 @@ pso_mae <- calc_mae(lidar_values, pso_extracted, "PSO")
 woa_mae <- calc_mae(lidar_values, woa_extracted, "WOA")
 lbfgsb_mae <- calc_mae(lidar_values, lbfgsb_extracted, "L-BFGS-B")
 
+
 # Create a data frame for plotting
 mae_df <- data.frame(
   Method = c("Original", "GA", "PSO", "WOA", "L-BFGS-B"),
@@ -397,6 +402,7 @@ if (nrow(mae_df_filtered) > 0) {
   cat("No valid MAE values to plot")
 }
 ```
+
 
 ## Comparison of Optimization Methods
 
@@ -506,3 +512,4 @@ Each optimization method has its strengths:
 For larger datasets, consider using the parallel processing options available with PSO and GA. The package will continue to evolve with additional optimization methods and improved performance.
 
 When selecting a method, consider the nature of your terrain (complex vs. smooth), computational constraints, and the specific characteristics of your lidar dataset.
+

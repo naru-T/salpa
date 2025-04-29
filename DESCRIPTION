@@ -1,5 +1,5 @@
 Package: salpa
-Title: Satellite Lidar Point Alignment
+Title: Satellite LiDAR Point Adjustment
 Version: 0.0.1.4
 Authors@R:
     person("Narumasa", "Tsutsumida", , "rsnaru.jp@gmail.com", role = c("aut", "cre"),

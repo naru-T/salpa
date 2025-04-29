@@ -213,7 +213,12 @@ result <- positional_correction(
   lower_bounds = c(-50, -50),  # Lower bounds for x and y
   upper_bounds = c(50, 50)     # Upper bounds for x and y
 )
+
 ```
+
+## Inquiry
+For questions and feedback:
+- GitHub issues: [https://github.com/naru-T/salpa/issues](https://github.com/naru-T/salpa/issues)
 
 ## License
 

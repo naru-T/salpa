@@ -52,7 +52,6 @@ linear_alignment <- function(sf_object, crs_code) {
     shot_ids <- unique(substr(as.character(sf_object$shot_number), 1, 10))
     
     adjusted_sf_list <- list()
-    
     for (shot in shot_ids) {
         # Subset the sf object for the current shot group
         sf_subset <- sf_object[substr(as.character(sf_object$shot_number), 1, 10) == shot, ]
