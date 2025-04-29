@@ -52,9 +52,10 @@ Let's load the sample GEDI L2A data included with the package:
 gpkg_path <- system.file("extdata", "gedi_l2a_shot_sample.gpkg", package = "salpa")
 lidar_footprints <- st_read(gpkg_path, quiet = TRUE)
 
+lidar_footprints <- lidar_footprints %>% mutate(gedi_dem = as.numeric(elev_lowestmode) - as.numeric(geoid))
 # Look at the data
 #head(lidar_footprints)
-plot(lidar_footprints["elev_lowestmode"], pch = 20, main = "GEDI L2A Lidar Footprints")
+plot(lidar_footprints["gedi_dem"], pch = 20, main = "GEDI L2A Lidar Footprints")
 ```
 
 ## Reference DEM Preparation
@@ -70,7 +71,7 @@ bbox_sf <- st_as_sf(st_as_sfc(bbox_4326))
 
 
 # Get reference DEM
-dem <- elevatr::get_elev_raster(bbox_sf, z = 13, clip = "bbox")
+dem <- elevatr::get_elev_raster(bbox_sf, z = 12, clip = "bbox")
 dem_3857 <- raster::projectRaster(dem, crs = 3857)
 dem_rast <- terra::rast(dem_3857)
 
@@ -98,7 +99,7 @@ ga_result <- positional_correction(
   input_rast = dem_rast,
   minimizing_method = "area",
   target_variable = "mean",
-  lidar_value = "elev_lowestmode",
+  lidar_value = "gedi_dem",
   buf = 12.5,
   lower_bounds = c(-25, -25),
   upper_bounds = c(25, 25),
@@ -123,7 +124,7 @@ pso_result <- positional_correction(
   input_rast = dem_rast,
   minimizing_method = "area",
   target_variable = "mean",
-  lidar_value = "elev_lowestmode",
+  lidar_value = "gedi_dem",
   buf = 12.5,
   lower_bounds = c(-25, -25),
   upper_bounds = c(25, 25),
@@ -148,14 +149,14 @@ print(pso_result$optim_result)
 WOA is inspired by the bubble-net hunting strategy of humpback whales and excels at balancing exploration and exploitation.
 
 ```{r}
-# Apply positional correction using WOA with error handling
+# Apply positional correction using WOA
 woa_result <- tryCatch({
   positional_correction(
     lidar_footprints = lidar_footprints_3857,
     input_rast = dem_rast,
     minimizing_method = "area",
     target_variable = "mean",
-    lidar_value = "elev_lowestmode",
+    lidar_value = "gedi_dem",
     buf = 12.5,
     lower_bounds = c(-25, -25),
     upper_bounds = c(25, 25),
@@ -193,7 +194,7 @@ lbfgsb_result <- tryCatch({
     input_rast = dem_rast,
     minimizing_method = "area",
     target_variable = "mean",
-    lidar_value = "elev_lowestmode",
+    lidar_value = "gedi_dem",
     buf = 12.5,
     lower_bounds = c(-25, -25),
     upper_bounds = c(25, 25),
@@ -322,7 +323,7 @@ woa_extracted <- exact_extract(dem_rast, buffered_woa, "mean", progress = FALSE)
 lbfgsb_extracted <- exact_extract(dem_rast, buffered_lbfgsb, "mean", progress = FALSE)
 
 # Get lidar values
-lidar_values <- as.numeric(lidar_footprints_3857$elev_lowestmode)
+lidar_values <- as.numeric(lidar_footprints_3857$gedi_dem)
 
 # Print summary stats for each dataset
 cat("Original values summary:\n")
@@ -490,7 +491,7 @@ dtw_result <- positional_correction(
   input_rast = dem_rast,
   minimizing_method = "dtw",  # Can be "euclidean", "dtw", "manhattan", "correlation", "area", or "hausdorff"
   target_variable = "mean",
-  lidar_value = "elev_lowestmode",
+  lidar_value = "gedi_dem",
   optimization_method = "ga"
 )
 ```
