@@ -1,34 +1,34 @@
 Package: salpa
-Title: Satellite LiDAR Point Adjustment
+Title: Satellite Lidar Point Alignment
 Version: 0.0.1.4
 Authors@R:
     person("Narumasa", "Tsutsumida", , "rsnaru.jp@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-6333-0301"))
-Description: Optimizes and adjusts satellite LiDAR point positions using genetic algorithms.
-    Provides tools for linear adjustment and location correction of spatial point data,
-    particularly focused on satellite-based LiDAR observations.
-License: GPL (>= 3)
+Description: Tools for aligning satellite lidar data with geographic reference data.
+    This package includes algorithms for minimizing positional error using
+    various optimization techniques including Genetic Algorithms (GA),
+    Particle Swarm Optimization (PSO), and Whale Optimization Algorithm (WOA).
+    It supports various error metrics including Euclidean, Manhattan, DTW,
+    correlation, and area-based methods.
+License: MIT + file LICENSE
 Encoding: UTF-8
-Roxygen: list(markdown = TRUE, r6 = FALSE, load = "installed")
+Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
-Suggests:
-    knitr,
-    rmarkdown,
-    terra,
-    tmap,
-    tmaptools,
-    elevatr,
-    raster,
-    ggplot2,
-    tidyr,
-    testthat (>= 3.0.0)
-VignetteBuilder: knitr
 Imports:
     dplyr,
-    sf,
-    GA,
     exactextractr,
-    dtw,
-    pso
-Depends:
-    R (>= 4.1.0)
+    GA,
+    ggplot2,
+    methods,
+    pso,
+    raster,
+    sf,
+    stats,
+    terra
+Suggests:
+    elevatr,
+    knitr,
+    rmarkdown,
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+VignetteBuilder: knitr

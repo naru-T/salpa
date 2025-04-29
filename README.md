@@ -1,52 +1,30 @@
-# salpa: Satellite LiDAR Point Adjustment <img src="inst/hex/salpa_hex.png" align="right" height="150" />
+# salpa: Satellite Lidar Point Alignment
 
-<!-- badges: start -->
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![DOI](https://zenodo.org/badge/929837682.svg)](https://doi.org/10.5281/zenodo.15041709)
-<!-- badges: end -->
-
-## Overview
-
-`salpa` is an R package designed for optimizing and adjusting satellite LiDAR point positions. The package provides tools for improving the spatial accuracy of satellite-based LiDAR observations through two main adjustment methods:
-
-1. **Linear Alignment**: Aligns points to their best-fit line
-2. **Positional Correction**: Fine-tunes point locations with specified offsets to minimize elevation differences using optimization algorithms
-
-## Installation
-
-You can install the development version of salpa from GitHub:
-
-```r
-# install.packages("devtools")
-devtools::install_github("naru-T/salpa")
-```
+This R package provides tools for aligning satellite lidar data with geographic reference data through optimized positional correction.
 
 ## Features
 
-- **Linear Alignment**: Corrects systematic linear offsets in LiDAR data
-- **Positional Correction**: Optimizes point positions using advanced optimization methods
-- **Multiple Optimization Methods**: Supports both Genetic Algorithm (GA) and Particle Swarm Optimization (PSO)
-- **Multiple Distance Metrics**: Supports various distance calculations (Euclidean, DTW, Manhattan, etc.)
-- **Flexible Buffer Options**: Customizable buffer sizes for point adjustments
-- **Parallel Processing**: Support for parallel computation in optimization
+- Multiple optimization algorithms:
+  - Genetic Algorithm (GA)
+  - Particle Swarm Optimization (PSO)
+  - Whale Optimization Algorithm (WOA)
+  - Limited-memory BFGS with Box constraints (L-BFGS-B)
+- Various error metrics:
+  - Euclidean distance
+  - Manhattan distance
+  - Dynamic Time Warping (DTW)
+  - Correlation-based
+  - Area-based
+  - Hausdorff distance
+- Efficient batch processing
+- Support for parallel computation
 
-## Dependencies
+## Installation
 
-### Required Packages
-- sf: For spatial data handling
-- GA: For genetic algorithm optimization
-- pso: For particle swarm optimization
-- exactextractr: For raster value extraction
-- stats: For statistical calculations
-- dplyr: For data manipulation
-
-### Suggested Packages
-- terra: For raster data handling
-- tmap & tmaptools: For mapping
-- elevatr: For elevation data access
-- ggplot2: For visualization
-- tidyr: For data reshaping
-- testthat: For unit testing
+```r
+# Install from GitHub
+devtools::install_github("naru-T/salpa")
+```
 
 ## Basic Usage
 
@@ -55,97 +33,188 @@ library(salpa)
 library(sf)
 library(terra)
 
-# Load sample data
-gpkg_path <- system.file("extdata", "gedi_l2a_shot_sample.gpkg", package = "salpa")
-lidar_footprints <- st_read(gpkg_path)
+# Load lidar data
+lidar_points <- st_read("lidar_points.gpkg")
 
-# Step 1: Linear Alignment
-aligned_points <- linear_alignment(lidar_footprints, crs_code = 3857)
+# Load reference DEM
+dem <- rast("reference_dem.tif")
 
-# Step 2: Positional Correction with Genetic Algorithm (default)
-ga_corrected_positions <- positional_correction(
-  lidar_footprints = aligned_points,
-  input_rast = dem_rast,           # Your reference DEM
-  minimizing_method = "euclidean", # Distance metric for comparison
-  target_variable = "mean",
-  lidar_value = "elev_lowestmode", # Column containing LiDAR elevation values
-  buf = 12.5,                      # Buffer size in meters
-  crs_code = 3857,
-  optimization_method = "ga",      # Use Genetic Algorithm (default)
-  parallel = TRUE
-)
-
-# Step 2 (Alternative): Positional Correction with Particle Swarm Optimization
-pso_corrected_positions <- positional_correction(
-  lidar_footprints = aligned_points,
-  input_rast = dem_rast,
+# Apply positional correction
+result <- positional_correction(
+  lidar_footprints = lidar_points,
+  input_rast = dem,
   minimizing_method = "euclidean",
   target_variable = "mean",
-  lidar_value = "elev_lowestmode",
-  buf = 12.5,
-  crs_code = 3857,
-  optimization_method = "pso",     # Use Particle Swarm Optimization (faster alternative)
-  parallel = TRUE
+  lidar_value = "elevation",
+  optimization_method = "ga" 
 )
+
+# Access the corrected footprints
+corrected_points <- result$corrected_footprints
+
+# Get optimization results
+optim_results <- result$optim_result
 ```
 
 ## Optimization Methods
 
-The package supports multiple optimization methods:
+The package implements four different optimization methods, each with distinct characteristics:
 
-1. **Genetic Algorithm (GA)**: The original implementation, effective for complex optimization problems with noisy spatial data
-2. **Particle Swarm Optimization (PSO)**: An alternative that may offer performance advantages for certain datasets
+### Genetic Algorithm (GA)
+- Mimics natural selection processes
+- Good for complex search spaces with many local optima
+- Parameter `optimization_method = "ga"`
+- Additional parameters through `pop_size` and `max_iter`
 
-Performance varies by dataset characteristics, with each method having strengths for different problem types:
-- **GA**: Often performs better on discrete problems or when the search space has many local optima
-- **PSO**: May perform better on continuous problems with smoother gradients
+```r
+# Example with GA-specific parameters
+ga_result <- positional_correction(
+  lidar_footprints = lidar_points,
+  input_rast = dem,
+  optimization_method = "ga",
+  pop_size = 50,      # Population size
+  max_iter = 100,     # Maximum iterations
+  parallel = TRUE     # Enable parallel processing
+)
+```
 
-Both methods support parallel processing for improved performance and achieve similar accuracy levels. We recommend benchmarking both methods on your specific data to determine the optimal approach.
+### Particle Swarm Optimization (PSO)
+- Based on social behavior of bird flocking or fish schooling
+- Efficient for continuous optimization problems
+- Generally faster convergence than GA for many problems
+- Parameter `optimization_method = "pso"`
+- Additional parameters can be passed through `pso_params` list
+
+```r
+# Example with PSO-specific parameters
+pso_result <- positional_correction(
+  lidar_footprints = lidar_points,
+  input_rast = dem,
+  optimization_method = "pso",
+  pop_size = 30,      # Swarm size
+  max_iter = 100,     # Maximum iterations
+  parallel = TRUE,    # Enable parallel processing
+  pso_params = list(
+    trace = FALSE,    # Whether to print progress
+    abstol = 1e-4,    # Absolute tolerance
+    reltol = 1e-4,    # Relative tolerance
+    REPORT = 10       # Report every 10 iterations
+  )
+)
+```
+
+### Whale Optimization Algorithm (WOA)
+- Mimics hunting behavior of humpback whales
+- Balances exploration and exploitation phases
+- Effective for multimodal optimization problems
+- Parameter `optimization_method = "woa"`
+- Additional parameters through `woa_params` list
+
+```r
+# Example with WOA-specific parameters
+woa_result <- positional_correction(
+  lidar_footprints = lidar_points,
+  input_rast = dem,
+  optimization_method = "woa",
+  pop_size = 30,      # Number of whales
+  max_iter = 100,     # Maximum iterations
+  woa_params = list(
+    verbose = TRUE,   # Whether to print progress
+    batch_size = 10   # Process in batches (more memory efficient)
+  )
+)
+```
+
+### Limited-memory BFGS with Box constraints (L-BFGS-B)
+- Gradient-based optimization method with memory efficiency
+- Typically fastest for well-behaved, smooth functions
+- Most efficient for small search spaces
+- Parameter `optimization_method = "lbfgsb"`
+- Additional parameters through `lbfgsb_params` list
+
+```r
+# Example with L-BFGS-B specific parameters
+lbfgsb_result <- positional_correction(
+  lidar_footprints = lidar_points,
+  input_rast = dem,
+  optimization_method = "lbfgsb",
+  lbfgsb_params = list(
+    factr = 1e7,     # Convergence factor
+    pgtol = 1e-5,    # Projected gradient tolerance
+    trace = 1        # Tracing level (0-6)
+  )
+)
+```
+
+## Performance Considerations
+
+Each optimization method has strengths for different scenarios:
+
+- **L-BFGS-B**: Fastest convergence for well-behaved functions with smooth gradients. For small search spaces (≤60 meters), L-BFGS-B can be 2-5x faster than other methods.
+
+- **GA**: Most robust for complex, non-convex problems with many local optima. Requires more function evaluations but parallel processing can significantly improve performance.
+
+- **PSO**: Good balance between exploration speed and convergence accuracy. Performance can be significantly improved by:
+  - Using smaller swarm sizes (10-30) for faster convergence
+  - Setting appropriate tolerance parameters to avoid unnecessary iterations
+  - Using parallel processing for large datasets
+  - Employing early stopping criteria for well-behaved functions
+
+- **WOA**: Excellent at escaping local minima with its spiral search pattern. The built-in batch processing capability makes it memory efficient for large datasets.
+
+### Method Selection Guidelines
+
+- For small adjustments (a few dozen meters) or relatively flat terrain: **L-BFGS-B**
+- For complex terrain with many local optima: **GA** or **WOA**
+- For best balance of speed and accuracy: **PSO** with tuned parameters
+- For large datasets that don't fit in memory: **WOA** with batch processing
 
 ## Distance Metrics
 
-The package supports multiple distance metrics for comparing sequences:
+The package implements multiple distance metrics for comparing elevation profiles:
 
-1. **Euclidean** (default): Standard point-to-point distance
-2. **DTW**: Dynamic Time Warping for sequence alignment
-3. **Manhattan**: Sum of absolute differences
-4. **Correlation**: Based on Pearson correlation
-5. **Area**: Area between curves
-6. **Hausdorff**: Maximum minimum distance
+- **Euclidean Distance** (`minimizing_method = "euclidean"`): Standard point-to-point distance
+- **Dynamic Time Warping** (`minimizing_method = "dtw"`): Handles temporal shifts in sequences
+- **Manhattan Distance** (`minimizing_method = "manhattan"`): Sum of absolute differences
+- **Correlation Distance** (`minimizing_method = "correlation"`): Based on correlation coefficients
+- **Area Distance** (`minimizing_method = "area"`): Area between profiles
+- **Hausdorff Distance** (`minimizing_method = "hausdorff"`): Maximum of all minimum distances
 
-Each metric handles NA values appropriately and can be selected using the `minimizing_method` parameter.
+## Advanced Usage
 
-## Documentation
+### Parallel Processing
 
-For more detailed information and examples, please refer to:
-- Package vignette: `vignette("salpa")`
-- Function documentation: `?linear_alignment`, `?positional_correction`, `?perform_distance`
+Enable parallel processing to speed up computation:
 
-## Contributing
+```r
+result <- positional_correction(
+  lidar_footprints = lidar_points,
+  input_rast = dem,
+  minimizing_method = "euclidean",
+  target_variable = "mean",
+  lidar_value = "elevation",
+  optimization_method = "pso",
+  parallel = TRUE  # Enable parallel processing
+)
+```
 
-Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
+### Custom Search Bounds
 
-## Author
+Specify custom search bounds for the optimization:
 
-Narumasa Tsutsumida (ORCID: 0000-0002-6333-0301)
+```r
+result <- positional_correction(
+  lidar_footprints = lidar_points,
+  input_rast = dem,
+  minimizing_method = "euclidean",
+  target_variable = "mean",
+  lidar_value = "elevation",
+  optimization_method = "pso",
+  lower_bounds = c(-50, -50),  # Lower bounds for x and y
+  upper_bounds = c(50, 50)     # Upper bounds for x and y
+)
+```
 
 ## License
 
-This project is licensed under the GPL-3 License - see the LICENSE file for details.
-
-## Citation
-
-If you use this package in your research, please cite it as:
-
-```r
-Tsutsumida N. (2025) salpa: Satellite LiDAR Point Adjustment, R package version 0.0.1.3, https://github.com/naru-T/salpa
-```
-
-## Contact
-
-For questions and feedback:
-- GitHub issues: [https://github.com/naru-T/salpa/issues](https://github.com/naru-T/salpa/issues)
-
-## Notes
-
-The photo used in the hex sticker is from [wikipedia](https://en.wikipedia.org/wiki/Salp#/media/File:Sea_Salp_Chain.jpg).
+MIT
