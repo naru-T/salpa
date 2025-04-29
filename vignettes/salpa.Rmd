@@ -51,7 +51,7 @@ gpkg_path <- system.file("extdata", "gedi_l2a_shot_sample.gpkg", package = "salp
 lidar_footprints <- st_read(gpkg_path, quiet = TRUE)
 
 # Look at the data
-head(lidar_footprints)
+#head(lidar_footprints)
 plot(lidar_footprints["elev_lowestmode"], pch = 20, main = "GEDI L2A Lidar Footprints")
 ```
 
