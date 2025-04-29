@@ -1,6 +1,6 @@
-# salpa: Satellite Lidar Point Alignment
+# salpa: Satellite LiDAR Point Alignment
 
-This R package provides tools for aligning satellite lidar data with geographic reference data through optimized positional correction.
+This R package provides tools for aligning satellite LiDAR data with geographic reference data through optimized positional correction.
 
 ## Features
 
