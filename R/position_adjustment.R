@@ -8,6 +8,13 @@
 #' @param crs_code Coordinate reference system code
 #' @importFrom sf st_transform st_coordinates st_centroid st_geometry st_crs st_geometry<- st_as_sf
 #' @return Adjusted satellite LiDAR footprints as an sf object with updated geometry
+#' @examples
+#' pts <- sf::st_as_sf(
+#'   data.frame(x = c(500, 510, 520), y = c(300, 310, 320)),
+#'   coords = c("x", "y"), crs = 32654
+#' )
+#' adjusted <- position_adjustment(pts, add_x = 5, add_y = -3, crs_code = 32654)
+#' print(adjusted)
 #' @export
 position_adjustment <- function(lidar_footprints, add_x, add_y, crs_code){
     # Ensure input is an sf object with valid geometry

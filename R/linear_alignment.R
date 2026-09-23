@@ -14,14 +14,16 @@
 #' @importFrom stats cov
 #'
 #' @examples
-#' \dontrun{
-#' library(sf)
-#' 
-#' # Example usage
-#' sf_object <- st_read('path_to_your_shapefile.shp')
-#' crs_code <- 3857
-#' adjusted_sf <- linear_alignment(sf_object, crs_code)
-#' }
+#' pts <- sf::st_as_sf(
+#'   data.frame(
+#'     x = c(500, 510, 520, 530),
+#'     y = c(300, 312, 318, 331),
+#'     shot_number = c("1234567890A", "1234567890A", "1234567890B", "1234567890B")
+#'   ),
+#'   coords = c("x", "y"), crs = 32654
+#' )
+#' aligned <- linear_alignment(pts, crs_code = 32654)
+#' print(aligned)
 #'
 #' @export
 linear_alignment <- function(sf_object, crs_code) {
@@ -52,7 +54,6 @@ linear_alignment <- function(sf_object, crs_code) {
     shot_ids <- unique(substr(as.character(sf_object$shot_number), 1, 10))
     
     adjusted_sf_list <- list()
-    
     for (shot in shot_ids) {
         # Subset the sf object for the current shot group
         sf_subset <- sf_object[substr(as.character(sf_object$shot_number), 1, 10) == shot, ]

@@ -37,8 +37,24 @@ Options are "dtw", "euclidean", "manhattan", "correlation", "area", "hausdorff".
 \item{lidar_value}{name of the column containing LiDAR measurement values}
 }
 \value{
-data frame with summary statistics
+data frame with loss value for the given offset
 }
 \description{
 Get loss value to be minimized
+}
+\examples{
+\donttest{
+  lidar_sf <- sf::st_as_sf(
+    data.frame(x = c(500, 510, 520), y = c(300, 310, 320), elev = c(100, 101, 99)),
+    coords = c("x", "y"), crs = 32654
+  )
+  dem <- terra::rast(
+    nrows = 10, ncols = 10,
+    xmin = 450, xmax = 600, ymin = 250, ymax = 400,
+    crs = "EPSG:32654", vals = runif(100, 98, 103)
+  )
+  result <- get_loss(lidar_sf, add_x = 0, add_y = 0, buf = 10,
+                     input_rast = dem, target_variable = "mean",
+                     crs_code = 32654, lidar_value = "elev")
+}
 }

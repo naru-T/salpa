@@ -8,16 +8,19 @@ positional_correction(
   lidar_footprints,
   input_rast,
   minimizing_method = "euclidean",
-  target_variable,
-  buf = 12.5,
-  crs_code,
+  target_variable = "mean",
   lidar_value,
-  lower_bounds = c(-30, -30),
-  upper_bounds = c(30, 30),
-  pop_size = 50,
-  max_iter = 100,
+  buf = 12.5,
+  crs_code = 3857,
+  optimization_method = "ga",
+  lower_bounds = c(-25, -25),
+  upper_bounds = c(25, 25),
+  pop_size = 25,
+  max_iter = 50,
+  pso_params = NULL,
+  geographic_coordinates = FALSE,
   parallel = FALSE,
-  geographic_coordinates = FALSE
+  ...
 )
 }
 \arguments{
@@ -30,28 +33,55 @@ Options include "dtw", "euclidean", "manhattan", "correlation", "area", "hausdor
 
 \item{target_variable}{Character string for the target variable.}
 
+\item{lidar_value}{Name of the column containing LiDAR measurement values.}
+
 \item{buf}{Numeric value for buffer size (default: 12.5).}
 
 \item{crs_code}{Numeric value for CRS code.}
 
-\item{lidar_value}{Name of the column containing LiDAR measurement values.}
+\item{optimization_method}{Character string for optimization method. Options are "ga" (genetic algorithm), "pso" (particle swarm optimization), "woa" (whale optimization algorithm), or "lbfgsb" (L-BFGS-B). Default is "ga".}
 
-\item{lower_bounds}{Numeric vector for lower bounds in the genetic algorithm (default: c(-30, -30)).}
+\item{lower_bounds}{Numeric vector for lower bounds in the optimization (default: c(-30, -30)).}
 
-\item{upper_bounds}{Numeric vector for upper bounds in the genetic algorithm (default: c(30, 30)).}
+\item{upper_bounds}{Numeric vector for upper bounds in the optimization (default: c(30, 30)).}
 
-\item{pop_size}{Numeric value for population size in the genetic algorithm (default: 50).}
+\item{pop_size}{Numeric value for population size (GA) or swarm size (PSO) (default: 25).}
 
-\item{max_iter}{Numeric value for maximum iterations in the genetic algorithm (default: 100).}
+\item{max_iter}{Numeric value for maximum iterations (default: 50).}
 
-\item{parallel}{Logical value for parallel processing (default: FALSE).}
+\item{pso_params}{List of additional parameters for PSO (default: NULL).
+List can include: w (inertia), c1 (cognitive learning factor), c2 (social learning factor).}
 
 \item{geographic_coordinates}{Logical value indicating if input coordinates are in geographic coordinates (default: FALSE).
 If TRUE, the bounds will be converted from meters to degrees.}
+
+\item{parallel}{Logical value indicating whether to use parallel processing (default: FALSE).
+When TRUE, optimization algorithms will use multiple cores for faster computation.}
+
+\item{...}{Additional parameters to pass to minimize_loss}
 }
 \value{
-List containing optimization results and corrected positions.
+A list with \code{corrected_footprints} (sf object with corrected geometry and
+added columns \code{x_correction}, \code{y_correction}, \code{correction_value}, \code{correction_method},
+\code{optimization}) and \code{optim_result} (data frame with best offset and loss value).
 }
 \description{
-This function performs positional correction on satellite LiDAR footprints using genetic algorithm optimization.
+This function performs positional correction on satellite LiDAR footprints using optimization algorithms.
+}
+\examples{
+\donttest{
+  lidar_sf <- sf::st_as_sf(
+    data.frame(x = c(500, 510, 520), y = c(300, 310, 320), elev = c(100, 101, 99)),
+    coords = c("x", "y"), crs = 32654
+  )
+  dem <- terra::rast(
+    nrows = 10, ncols = 10,
+    xmin = 450, xmax = 600, ymin = 250, ymax = 400,
+    crs = "EPSG:32654", vals = runif(100, 98, 103)
+  )
+  result <- positional_correction(lidar_sf, dem, lidar_value = "elev",
+                                  crs_code = 32654, buf = 10,
+                                  optimization_method = "lbfgsb", max_iter = 10)
+  print(result$optim_result)
+}
 }

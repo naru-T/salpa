@@ -1,6 +1,6 @@
 #' Positional correction of satellite LiDAR footprints
 #'
-#' This function performs positional correction on satellite LiDAR footprints using genetic algorithm optimization.
+#' This function performs positional correction on satellite LiDAR footprints using optimization algorithms.
 #'
 #' @param lidar_footprints sf object containing satellite LiDAR footprints.
 #' @param input_rast Raster object for reference data.
@@ -10,38 +10,69 @@
 #' @param buf Numeric value for buffer size (default: 12.5).
 #' @param crs_code Numeric value for CRS code.
 #' @param lidar_value Name of the column containing LiDAR measurement values.
-#' @param lower_bounds Numeric vector for lower bounds in the genetic algorithm (default: c(-30, -30)).
-#' @param upper_bounds Numeric vector for upper bounds in the genetic algorithm (default: c(30, 30)).
-#' @param pop_size Numeric value for population size in the genetic algorithm (default: 50).
-#' @param max_iter Numeric value for maximum iterations in the genetic algorithm (default: 100).
-#' @param parallel Logical value for parallel processing (default: FALSE).
+#' @param optimization_method Character string for optimization method. Options are "ga" (genetic algorithm), "pso" (particle swarm optimization), "woa" (whale optimization algorithm), or "lbfgsb" (L-BFGS-B). Default is "ga".
+#' @param lower_bounds Numeric vector for lower bounds in the optimization (default: c(-30, -30)).
+#' @param upper_bounds Numeric vector for upper bounds in the optimization (default: c(30, 30)).
+#' @param pop_size Numeric value for population size (GA) or swarm size (PSO) (default: 25).
+#' @param max_iter Numeric value for maximum iterations (default: 50).
+#' @param pso_params List of additional parameters for PSO (default: NULL).
+#'        List can include: w (inertia), c1 (cognitive learning factor), c2 (social learning factor).
 #' @param geographic_coordinates Logical value indicating if input coordinates are in geographic coordinates (default: FALSE).
 #'        If TRUE, the bounds will be converted from meters to degrees.
-#' @return List containing optimization results and corrected positions.
+#' @param parallel Logical value indicating whether to use parallel processing (default: FALSE).
+#'        When TRUE, optimization algorithms will use multiple cores for faster computation.
+#' @param ... Additional parameters to pass to minimize_loss
+#' @return A list with `corrected_footprints` (sf object with corrected geometry and
+#'   added columns `x_correction`, `y_correction`, `correction_value`, `correction_method`,
+#'   `optimization`) and `optim_result` (data frame with best offset and loss value).
+#' @examples
+#' \donttest{
+#'   lidar_sf <- sf::st_as_sf(
+#'     data.frame(x = c(500, 510, 520), y = c(300, 310, 320), elev = c(100, 101, 99)),
+#'     coords = c("x", "y"), crs = 32654
+#'   )
+#'   dem <- terra::rast(
+#'     nrows = 10, ncols = 10,
+#'     xmin = 450, xmax = 600, ymin = 250, ymax = 400,
+#'     crs = "EPSG:32654", vals = runif(100, 98, 103)
+#'   )
+#'   result <- positional_correction(lidar_sf, dem, lidar_value = "elev",
+#'                                   crs_code = 32654, buf = 10,
+#'                                   optimization_method = "lbfgsb", max_iter = 10)
+#'   print(result$optim_result)
+#' }
 #' @export
-positional_correction <- function(lidar_footprints, input_rast, minimizing_method = "euclidean",
-                                    target_variable, buf = 12.5, crs_code, lidar_value,
-                                    lower_bounds = c(-25, -25),
-                                    upper_bounds = c(25, 25),
-                                    pop_size = 50,
-                                    max_iter = 100,
-                                    parallel = FALSE,
-                                    geographic_coordinates = FALSE) {
-    # Validate buffer size
-    if (buf <= 0) {
-        stop("Buffer size must be a positive number")
-    }
+positional_correction <- function(lidar_footprints, input_rast, minimizing_method = "euclidean", target_variable = "mean", 
+                                lidar_value, buf = 12.5, crs_code = 3857, optimization_method = "ga",
+                                lower_bounds = c(-25, -25), upper_bounds = c(25, 25),
+                                pop_size = 25, max_iter = 50,
+                                pso_params = NULL, geographic_coordinates = FALSE, parallel = FALSE, ...) {
+    # Validate inputs using utility functions
+    validate_buffer(buf)
+    validate_optimization_method(optimization_method)
+    crs_obj_from_code <- validate_crs_code(crs_code)
 
     # Convert bounds to degrees if using geographic coordinates
     if (geographic_coordinates) {
-        lower_bounds <- lower_bounds / 111320  # Convert meters to degrees (approximate)
-        upper_bounds <- upper_bounds / 111320  # Convert meters to degrees (approximate)
+        lower_bounds <- convert_bounds_to_degrees(lower_bounds)
+        upper_bounds <- convert_bounds_to_degrees(upper_bounds)
+    }
+
+    # Check if the input raster is aligned with the CRS code
+    if (sf::st_crs(input_rast)$epsg != crs_code) {
+        stop("Input raster must be in the same coordinate system as specified by crs_code")
+    }
+
+    if (sf::st_crs(lidar_footprints)$epsg != crs_code) {
+        # Transform to target CRS
+        lidar_footprints <- sf::st_transform(lidar_footprints, crs = crs_code)
     }
 
     optim_result <- tryCatch({
         results <- minimize_loss(lidar_footprints, input_rast, minimizing_method,
                                  target_variable, buf, crs_code, lidar_value,
-                                 lower_bounds, upper_bounds, pop_size, max_iter, parallel)
+                                 optimization_method, lower_bounds, upper_bounds, 
+                                 pop_size, max_iter, pso_params, parallel = parallel, ...)
         
         # If best_value is 1000 (worst case), set offsets to 0
         if (!is.null(results) && results$best_value == 1000) {
@@ -62,11 +93,19 @@ positional_correction <- function(lidar_footprints, input_rast, minimizing_metho
     }
 
     # Compute the adjusted footprints using the position_adjustment function
-    adjusted_footprints <- position_adjustment(lidar_footprints,
-                                               optim_result$best_x,
-                                               optim_result$best_y,
-                                               crs_code)
+    corrected_geometries <- sf::st_geometry(lidar_footprints) + c(optim_result$best_x, optim_result$best_y)
+    corrected_footprints <- sf::st_set_geometry(lidar_footprints, corrected_geometries)
+
+    # Add correction info to attribute table
+    corrected_footprints$x_correction <- optim_result$best_x
+    corrected_footprints$y_correction <- optim_result$best_y
+    corrected_footprints$correction_value <- optim_result$best_value
+    corrected_footprints$correction_method <- minimizing_method
+    corrected_footprints$optimization <- optimization_method
 
     # Return the results with the adjusted sf object under the key 'position_adjustment'
-    return(list(optim_result = optim_result, position_adjustment = adjusted_footprints))
+    return(list(
+        corrected_footprints = corrected_footprints,
+        optim_result = optim_result
+    ))
 }

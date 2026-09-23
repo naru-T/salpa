@@ -71,7 +71,7 @@ perform_distance <- function(seq1, seq2, method = "euclidean") {
     complete_seq1 <- df$seq1[complete_cases]
     complete_seq2 <- df$seq2[complete_cases]
     
-    # Calculate selected metric
+    # Calculate selected metric with fallback to R implementations
     tryCatch({
         result$distance <- switch(method,
             "dtw" = {
@@ -80,20 +80,63 @@ perform_distance <- function(seq1, seq2, method = "euclidean") {
                                     keep.internals = TRUE)
                 alignment$distance / n_complete
             },
-            "euclidean" = sum(sqrt((complete_seq1 - complete_seq2)^2)) / n_complete,
-            "manhattan" = sum(abs(complete_seq1 - complete_seq2)) / n_complete,
+            "euclidean" = {
+                # Try C++ first, fallback to R
+                tryCatch({
+                    euclidean_distance_cpp(seq1, seq2)
+                }, error = function(e) {
+                    # R implementation: Sum of Euclidean distances (matches v0.0.1.4)
+                    if (n_complete == 0) NA_real_ else sum(sqrt((complete_seq1 - complete_seq2)^2)) / n_complete
+                })
+            },
+            "manhattan" = {
+                # Try C++ first, fallback to R
+                tryCatch({
+                    manhattan_distance_cpp(seq1, seq2)
+                }, error = function(e) {
+                    # R implementation: MAE
+                    if (n_complete == 0) NA_real_ else mean(abs(complete_seq1 - complete_seq2))
+                })
+            },
             "correlation" = 1 - abs(cor(complete_seq1, complete_seq2)),
             "area" = {
-                idx <- seq_along(seq1)
-                seq1_interp <- approx(idx[!is.na(seq1)], seq1[!is.na(seq1)], idx)$y
-                seq2_interp <- approx(idx[!is.na(seq2)], seq2[!is.na(seq2)], idx)$y
-                sum(abs(seq1_interp - seq2_interp)) / n_total
+                # Try C++ first, fallback to R
+                tryCatch({
+                    area_distance_cpp(seq1, seq2)
+                }, error = function(e) {
+                    # R implementation: simple interpolation and area difference
+                    interp_seq1 <- na.omit(approx(seq1, n = length(seq1))$y)
+                    interp_seq2 <- na.omit(approx(seq2, n = length(seq2))$y)
+                    if (length(interp_seq1) == 0 || length(interp_seq2) == 0) {
+                        NA_real_
+                    } else {
+                        mean(abs(interp_seq1 - interp_seq2))
+                    }
+                })
             },
             "hausdorff" = {
-                dist_matrix <- outer(complete_seq1, complete_seq2, 
-                                   function(x, y) abs(x - y))
-                max(c(apply(dist_matrix, 1, min),
-                     apply(dist_matrix, 2, min)))
+                # Try C++ first, fallback to R
+                tryCatch({
+                    hausdorff_distance_cpp(seq1, seq2)
+                }, error = function(e) {
+                    # R implementation: basic Hausdorff distance
+                    clean_seq1 <- complete_seq1
+                    clean_seq2 <- complete_seq2
+                    if (length(clean_seq1) == 0 || length(clean_seq2) == 0) {
+                        NA_real_
+                    } else {
+                        max_dist <- 0
+                        for (val1 in clean_seq1) {
+                            min_dist <- min(abs(val1 - clean_seq2))
+                            max_dist <- max(max_dist, min_dist)
+                        }
+                        for (val2 in clean_seq2) {
+                            min_dist <- min(abs(val2 - clean_seq1))
+                            max_dist <- max(max_dist, min_dist)
+                        }
+                        max_dist
+                    }
+                })
             }
         )
         result$valid <- TRUE

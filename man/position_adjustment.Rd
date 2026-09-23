@@ -21,3 +21,11 @@ Adjusted satellite LiDAR footprints as an sf object with updated geometry
 \description{
 This function adjusts the point locations of satellite LiDAR footprints with specified offsets.
 }
+\examples{
+pts <- sf::st_as_sf(
+  data.frame(x = c(500, 510, 520), y = c(300, 310, 320)),
+  coords = c("x", "y"), crs = 32654
+)
+adjusted <- position_adjustment(pts, add_x = 5, add_y = -3, crs_code = 32654)
+print(adjusted)
+}

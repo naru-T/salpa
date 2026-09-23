@@ -26,3 +26,6 @@
 #' @name gedi_l2a_shot_sample
 #' @docType data
 NULL 
+#' @useDynLib salpa, .registration=TRUE
+#' @importFrom Rcpp sourceCpp
+"_PACKAGE"

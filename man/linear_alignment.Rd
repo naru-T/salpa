@@ -20,13 +20,15 @@ The method computes the principal component of the coordinates for each shot gro
 between the points and the line, and then projects the points onto this line.
 }
 \examples{
-\dontrun{
-library(sf)
-
-# Example usage
-sf_object <- st_read('path_to_your_shapefile.shp')
-crs_code <- 3857
-adjusted_sf <- linear_alignment(sf_object, crs_code)
-}
+pts <- sf::st_as_sf(
+  data.frame(
+    x = c(500, 510, 520, 530),
+    y = c(300, 312, 318, 331),
+    shot_number = c("1234567890A", "1234567890A", "1234567890B", "1234567890B")
+  ),
+  coords = c("x", "y"), crs = 32654
+)
+aligned <- linear_alignment(pts, crs_code = 32654)
+print(aligned)
 
 }
