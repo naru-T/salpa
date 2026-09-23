@@ -11,8 +11,8 @@ Tools for aligning satellite lidar footprints to high-resolution digital elevati
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://github.com/naru-T/202502salpa-paper}
-  \item Report bugs at \url{https://github.com/naru-T/202502salpa-paper/issues}
+  \item \url{https://github.com/naru-T/salpa}
+  \item Report bugs at \url{https://github.com/naru-T/salpa/issues}
 }
 
 }

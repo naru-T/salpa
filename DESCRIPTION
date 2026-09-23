@@ -1,6 +1,6 @@
 Package: salpa
 Title: Satellite LiDAR Point Adjustment
-Version: 0.0.2.1
+Version: 0.0.2.2
 Authors@R: 
     person("Narumasa", "Tsutsumida", , "rsnaru.jp@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-6333-0301"))
@@ -12,8 +12,9 @@ Description: Tools for aligning satellite lidar footprints to high-resolution
     Population-based optimizers use fork-safe parallel fitness evaluation via
     mclapply with C++ acceleration for position updates.
 License: GPL-3
-URL: https://github.com/naru-T/202502salpa-paper
-BugReports: https://github.com/naru-T/202502salpa-paper/issues
+Depends: R (>= 4.1.0)
+URL: https://github.com/naru-T/salpa
+BugReports: https://github.com/naru-T/salpa/issues
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
@@ -24,7 +25,3 @@ Config/testthat/edition: 3
 VignetteBuilder: knitr
 LinkingTo: Rcpp
 NeedsCompilation: yes
-Packaged: 2026-03-13 00:01:31 UTC; naru-t
-Author: Narumasa Tsutsumida [aut, cre]
-    (<https://orcid.org/0000-0002-6333-0301>)
-Maintainer: Narumasa Tsutsumida <rsnaru.jp@gmail.com>

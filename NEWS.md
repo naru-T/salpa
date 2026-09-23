@@ -1,4 +1,14 @@
-# salpa 0.0.2.0
+# salpa 0.0.2.2
+
+## Bug fixes
+
+- Restored `Depends: R (>= 4.1.0)`. The package uses the native pipe (`|>`).
+- `URL` and `BugReports` now point at https://github.com/naru-T/salpa.
+- README license section now says GPL-3, matching `DESCRIPTION` and `LICENSE.md`.
+- README version heading updated to 0.0.2.2.
+- Removed R CMD build metadata (`Packaged`, `Author`, `Maintainer`) from the source tree and cleared executable bits introduced when unpacking the 0.0.2.1 tarball.
+
+# salpa 0.0.2.1
 
 ## Performance
 
