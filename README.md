@@ -1,174 +1,231 @@
 # salpa: Satellite LiDAR Point Alignment (v0.0.2.2)
 
-This R package provides tools for aligning satellite LiDAR data with geographic reference data through optimized positional correction.
+R package for aligning satellite LiDAR footprints (e.g. GEDI) to a high-resolution DEM by optimizing a 2D positional offset.
+
+Requires **R ≥ 4.1** (uses the native pipe `|>`). Population-based optimizers (GA / PSO / WOA) use a **custom C++ implementation** with fork-safe parallel fitness evaluation (`parallel::mclapply` + `terra::wrap`). There is **no runtime dependency** on the CRAN `GA` or `pso` packages.
 
 ## Features
 
-- Multiple optimization algorithms:
-  - Genetic Algorithm (GA)
-  - Particle Swarm Optimization (PSO)
-  - Whale Optimization Algorithm (WOA)
-  - Limited-memory BFGS with Box constraints (L-BFGS-B)
-- Various error metrics:
-  - Euclidean distance
-  - Manhattan distance
-  - Dynamic Time Warping (DTW)
-  - Correlation-based
-  - Area-based
-  - Hausdorff distance
+- Optimization algorithms:
+  - Genetic Algorithm (`"ga"`)
+  - Particle Swarm Optimization (`"pso"`)
+  - Whale Optimization Algorithm (`"woa"`)
+  - Limited-memory BFGS with box constraints (`"lbfgsb"`)
+- Distance / loss metrics (`minimizing_method`):
+  - `"euclidean"`, `"manhattan"`, `"dtw"`, `"correlation"`, `"area"`, `"hausdorff"`
+- Optional `geographic_coordinates = TRUE` to treat search bounds as metres and convert them to degrees for WGS84-style DEMs
+- Parallel fitness evaluation via `parallel = TRUE` or a numeric worker count (e.g. `parallel = 8`)
 
 ## Installation
 
 ```r
-# Install from GitHub
-devtools::install_github("naru-T/salpa")
+# Recommended: install the released source tarball
+install.packages(
+  "https://github.com/naru-T/salpa/releases/download/0.0.2.2/salpa_0.0.2.2.tar.gz",
+  repos = NULL,
+  type = "source"
+)
+
+# Or from GitHub (needs compilation; LinkingTo Rcpp)
+# remotes::install_github("naru-T/salpa")
 ```
 
-## Basic Usage
+## Basic usage
+
+`lidar_value` is **required** (column of LiDAR elevations). DEM and footprints must share the same CRS as `crs_code`.
 
 ```r
 library(salpa)
 library(sf)
 library(terra)
 
-# Load lidar data
 lidar_points <- st_read("lidar_points.gpkg")
-
-# Load reference DEM
 dem <- rast("reference_dem.tif")
 
-# Apply positional correction
 result <- positional_correction(
   lidar_footprints = lidar_points,
   input_rast = dem,
   minimizing_method = "euclidean",
   target_variable = "mean",
   lidar_value = "elevation",
-  optimization_method = "ga" 
+  buf = 12.5,
+  crs_code = 6677,                 # must match DEM / footprints
+  optimization_method = "ga",
+  lower_bounds = c(-25, -25),      # metres (default)
+  upper_bounds = c(25, 25),
+  pop_size = 50,
+  max_iter = 100,
+  parallel = 8
 )
 
-# Access the corrected footprints
 corrected_points <- result$corrected_footprints
-
-# Get optimization results
-optim_results <- result$optim_result
+optim_results <- result$optim_result   # best_x, best_y, best_value
 ```
 
-## Optimization Methods
+### Geographic (lon/lat) DEMs
 
-The package implements four different optimization methods, each with distinct characteristics:
-
-### Genetic Algorithm (GA)
-- Mimics natural selection processes
-- Good for complex search spaces with many local optima
-- Parameter `optimization_method = "ga"`
-- Additional parameters through `pop_size` and `max_iter`
+If the DEM is in geographic coordinates and you want bounds in **metres**:
 
 ```r
-# Example with GA-specific parameters
+result <- positional_correction(
+  lidar_footprints = lidar_points,
+  input_rast = dem,
+  lidar_value = "elevation",
+  crs_code = 4326,
+  geographic_coordinates = TRUE,   # convert ±25 m bounds to degrees
+  lower_bounds = c(-25, -25),
+  upper_bounds = c(25, 25),
+  optimization_method = "ga",
+  parallel = TRUE
+)
+```
+
+## Optimization methods
+
+Defaults for `positional_correction()`: `pop_size = 25`, `max_iter = 50`,
+`lower_bounds = c(-25, -25)`, `upper_bounds = c(25, 25)`, `parallel = FALSE`.
+
+### Genetic Algorithm (`optimization_method = "ga"`)
+
+Custom GA (BLX-α crossover, tournament selection) with C++ population updates.
+
+Optional knobs via `ga_params`:
+
+| Key | Meaning |
+|---|---|
+| `pcrossover` | Crossover probability (default `0.8`) |
+| `pmutation` | Mutation probability (default `0.1`) |
+| `run` | Early-stop patience in generations |
+| `elitism` | Number of elites kept |
+| `tournament_k` | Tournament size |
+
+```r
 ga_result <- positional_correction(
   lidar_footprints = lidar_points,
   input_rast = dem,
+  lidar_value = "elevation",
+  crs_code = 6677,
   optimization_method = "ga",
-  pop_size = 50,      # Population size
-  max_iter = 100,     # Maximum iterations
-  parallel = TRUE     # Enable parallel processing
+  pop_size = 50,
+  max_iter = 100,
+  parallel = TRUE,
+  ga_params = list(pcrossover = 0.8, pmutation = 0.1, run = 25)
 )
 ```
 
-### Particle Swarm Optimization (PSO)
-- Based on social behavior of bird flocking or fish schooling
-- Efficient for continuous optimization problems
-- Generally faster convergence than GA for many problems
-- Parameter `optimization_method = "pso"`
-- Additional parameters can be passed through `pso_params` list
+### Particle Swarm Optimization (`optimization_method = "pso"`)
+
+Custom PSO (not the CRAN `pso` package).
+
+Optional knobs via `pso_params`:
+
+| Key | Meaning |
+|---|---|
+| `w` | Inertia weight |
+| `c1` | Cognitive coefficient |
+| `c2` | Social coefficient |
+| `v_max` | Max velocity |
+| `abstol` | Improvement tolerance for stagnation (default `1e-3`) |
+| `stagnation_limit` | Iterations without improvement before stop |
+| `trace` | `TRUE` to print progress |
 
 ```r
-# Example with PSO-specific parameters
 pso_result <- positional_correction(
   lidar_footprints = lidar_points,
   input_rast = dem,
+  lidar_value = "elevation",
+  crs_code = 6677,
   optimization_method = "pso",
-  pop_size = 30,      # Swarm size
-  max_iter = 100,     # Maximum iterations
-  parallel = TRUE,    # Enable parallel processing
+  pop_size = 30,
+  max_iter = 100,
+  parallel = TRUE,
   pso_params = list(
-    trace = FALSE,    # Whether to print progress
-    abstol = 1e-4,    # Absolute tolerance
-    reltol = 1e-4,    # Relative tolerance
-    REPORT = 10       # Report every 10 iterations
+    w = 0.7,
+    c1 = 1.5,
+    c2 = 1.5,
+    abstol = 1e-4,
+    trace = FALSE
   )
 )
 ```
 
-### Whale Optimization Algorithm (WOA)
-- Mimics hunting behavior of humpback whales
-- Balances exploration and exploitation phases
-- Effective for multimodal optimization problems
-- Parameter `optimization_method = "woa"`
-- Additional parameters through `woa_params` list
+### Whale Optimization Algorithm (`optimization_method = "woa"`)
+
+Custom WOA with C++ position updates.
+
+Optional knobs via `woa_params`:
+
+| Key | Meaning |
+|---|---|
+| `verbose` | Print progress |
+| `early_stop` | Enable early stopping (default `TRUE`) |
+| `convergence_threshold` | Loss improvement threshold |
+| `stagnation_limit` | Iterations without improvement |
+| `memoization` | Cache objective evaluations (default `TRUE`) |
 
 ```r
-# Example with WOA-specific parameters
 woa_result <- positional_correction(
   lidar_footprints = lidar_points,
   input_rast = dem,
+  lidar_value = "elevation",
+  crs_code = 6677,
   optimization_method = "woa",
-  pop_size = 30,      # Number of whales
-  max_iter = 100,     # Maximum iterations
-  woa_params = list(
-    verbose = TRUE,   # Whether to print progress
-    batch_size = 10   # Process in batches (more memory efficient)
-  )
+  pop_size = 30,
+  max_iter = 100,
+  parallel = TRUE,
+  woa_params = list(verbose = TRUE, early_stop = TRUE)
 )
 ```
 
-### Limited-memory BFGS with Box constraints (L-BFGS-B)
-- Gradient-based optimization method with memory efficiency
-- Typically fastest for well-behaved, smooth functions
-- Most efficient for small search spaces
-- Parameter `optimization_method = "lbfgsb"`
-- Additional parameters through `lbfgsb_params` list
+### L-BFGS-B (`optimization_method = "lbfgsb"`)
+
+Gradient-based local search (`stats::optim` method `"L-BFGS-B"`). Fast on smooth losses; can settle in local minima on flat multimodal surfaces (e.g. area).
+
+Optional knobs via `lbfgsb_params` (passed into the optimizer control), including:
+
+| Key | Meaning |
+|---|---|
+| `multi_start` | `TRUE` to run several starts (default `FALSE`) |
+| `n_starts` | Number of starts when `multi_start = TRUE` |
+| `factr` | Convergence factor for `optim` |
+| `pgtol` | Projected gradient tolerance |
+| `trace` | `optim` tracing level |
 
 ```r
-# Example with L-BFGS-B specific parameters
 lbfgsb_result <- positional_correction(
   lidar_footprints = lidar_points,
   input_rast = dem,
+  lidar_value = "elevation",
+  crs_code = 6677,
   optimization_method = "lbfgsb",
+  max_iter = 100,
   lbfgsb_params = list(
-    factr = 1e7,     # Convergence factor
-    pgtol = 1e-5,    # Projected gradient tolerance
-    trace = 1        # Tracing level (0-6)
+    factr = 1e7,
+    pgtol = 1e-5,
+    multi_start = FALSE
   )
 )
 ```
 
+### Method selection guidelines
 
-### Method Selection Guidelines
+- Small shifts / relatively smooth loss: **L-BFGS-B**
+- Complex terrain / many local optima: **GA** or **WOA**
+- Speed / accuracy balance: **PSO**
+- Parallelism helps GA / PSO / WOA (`parallel = TRUE` or a core count); L-BFGS-B is typically single-start
 
-- For small adjustments (a few dozen meters) or relatively flat terrain: **L-BFGS-B**
-- For complex terrain with many local optima: **GA** or **WOA**
-- For best balance of speed and accuracy: **PSO** with tuned parameters
-- For large datasets that don't fit in memory: **WOA** with batch processing
+## Distance metrics
 
-## Distance Metrics
+| `minimizing_method` | Role |
+|---|---|
+| `"euclidean"` | Mean squared / Euclidean profile difference |
+| `"manhattan"` | Sum of absolute differences |
+| `"dtw"` | Dynamic time warping |
+| `"correlation"` | Correlation-based distance |
+| `"area"` | Area between elevation profiles |
+| `"hausdorff"` | Hausdorff distance between profiles |
 
-The package implements multiple distance metrics for comparing elevation profiles:
-
-- **Euclidean Distance** (`minimizing_method = "euclidean"`): Standard point-to-point distance
-- **Dynamic Time Warping** (`minimizing_method = "dtw"`): Handles temporal shifts in sequences
-- **Manhattan Distance** (`minimizing_method = "manhattan"`): Sum of absolute differences
-- **Correlation Distance** (`minimizing_method = "correlation"`): Based on correlation coefficients
-- **Area Distance** (`minimizing_method = "area"`): Area between profiles
-- **Hausdorff Distance** (`minimizing_method = "hausdorff"`): Maximum of all minimum distances
-
-## Advanced Usage
-
-
-### Custom Search Bounds
-
-Specify custom search bounds for the optimization:
+## Custom search bounds
 
 ```r
 result <- positional_correction(
@@ -177,16 +234,25 @@ result <- positional_correction(
   minimizing_method = "euclidean",
   target_variable = "mean",
   lidar_value = "elevation",
+  crs_code = 6677,
   optimization_method = "pso",
-  lower_bounds = c(-50, -50),  # Lower bounds for x and y
-  upper_bounds = c(50, 50)     # Upper bounds for x and y
+  lower_bounds = c(-50, -50),
+  upper_bounds = c(50, 50),
+  parallel = 8
 )
-
 ```
 
+## Parallel evaluation
+
+- `parallel = FALSE` — serial (default)
+- `parallel = TRUE` — use `detectCores() - 1` workers (Unix fork / `mclapply`)
+- `parallel = 8` — use 8 workers
+
+On Windows, evaluation falls back to serial (no fork).
+
 ## Inquiry
-For questions and feedback:
-- GitHub issues: [https://github.com/naru-T/salpa/issues](https://github.com/naru-T/salpa/issues)
+
+Questions and feedback: [GitHub issues](https://github.com/naru-T/salpa/issues)
 
 ## License
 

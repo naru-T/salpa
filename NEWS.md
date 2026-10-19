@@ -1,3 +1,12 @@
+# salpa (development)
+
+## Documentation
+
+- Rewrote README to match the shipped 0.0.2.2 API: required `lidar_value`,
+  default bounds ±25 m, `geographic_coordinates`, numeric `parallel`,
+  custom GA/PSO/WOA parameter keys (removed stale CRAN `pso` / WOA `batch_size`
+  examples), and release-tarball install instructions.
+
 # salpa 0.0.2.2
 
 ## Bug fixes
